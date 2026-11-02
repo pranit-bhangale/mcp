@@ -27,11 +27,13 @@ import java.util.UUID;
 @Table(
         name = "tickets",
         uniqueConstraints = {
-                @UniqueConstraint(name = "uk_ticket_ticket_id", columnNames = "ticket_id")
+                @UniqueConstraint(name = "uk_ticket_ticket_id", columnNames = "ticket_id"),
+                @UniqueConstraint(name = "uk_ticket_user_summary", columnNames = {"user_id", "summary"})
         },
         indexes = {
                 @Index(name = "idx_ticket_user_id", columnList = "user_id"),
                 @Index(name = "idx_ticket_username", columnList = "username"),
+                @Index(name = "idx_ticket_user_summary", columnList = "user_id, summary"),
                 @Index(name = "idx_ticket_status", columnList = "status"),
                 @Index(name = "idx_ticket_priority", columnList = "priority"),
                 @Index(name = "idx_ticket_category", columnList = "category"),
@@ -59,6 +61,9 @@ public class Ticket {
 
     @Column(name = "username", nullable = false)
     private String username;
+
+    @Column(name = "summary", nullable = false, length = 100)
+    private String summary;
 
     @Column(name = "description", nullable = false, columnDefinition = "TEXT")
     private String description;

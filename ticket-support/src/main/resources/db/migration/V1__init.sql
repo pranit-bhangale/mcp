@@ -1,9 +1,9 @@
-
 CREATE TABLE IF NOT EXISTS tickets (
     id          UUID         NOT NULL,
     ticket_id   VARCHAR(50)  NOT NULL,
     user_id     UUID         NOT NULL,
     username    VARCHAR(100) NOT NULL,
+    summary     VARCHAR(100) NOT NULL,
     description TEXT         NOT NULL,
     priority    VARCHAR(20)  NOT NULL DEFAULT 'MEDIUM',
     category    VARCHAR(30)  NOT NULL DEFAULT 'NOT_DEFINED',
@@ -18,6 +18,9 @@ CREATE TABLE IF NOT EXISTS tickets (
     CONSTRAINT uk_ticket_ticket_id
     UNIQUE (ticket_id),
 
+    CONSTRAINT uk_ticket_user_summary
+    UNIQUE (user_id, summary),
+
     CONSTRAINT chk_ticket_priority
     CHECK (priority IN ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')),
 
@@ -28,7 +31,6 @@ CREATE TABLE IF NOT EXISTS tickets (
     CHECK (status IN ('PENDING', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'))
     );
 
--- Indexes
 CREATE INDEX idx_ticket_user_id
     ON tickets (user_id);
 
