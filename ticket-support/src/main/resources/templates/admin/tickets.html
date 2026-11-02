@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket Management — Admin Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --bg-card: #ffffff;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --border-hover: #cbd5e1;
+            --primary: #0f172a;
+            --primary-hover: #1e293b;
+            --accent: #10b981;
+            --accent-bg: #ecfdf5;
+            --danger: #ef4444;
+            --danger-bg: #fef2f2;
+            --warning: #f59e0b;
+            --warning-bg: #fffbeb;
+            --info: #3b82f6;
+            --info-bg: #eff6ff;
+            --purple: #8b5cf6;
+            --purple-bg: #f5f3ff;
+            --radius: 10px;
+            --radius-sm: 6px;
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            padding: 24px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* ===== Header ===== */
+        .admin-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 24px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-title h1 {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge-admin {
+            font-size: 11px;
+            font-weight: 700;
+            background: #1e293b;
+            color: #ffffff;
+            padding: 3px 8px;
+            border-radius: var(--radius-sm);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .header-title p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .header-stats {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .stat-badge {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 6px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .stat-badge span {
+            color: var(--info);
+        }
+
+        /* ===== Filter Bar ===== */
+        .filter-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1 1 240px;
+            min-width: 200px;
+        }
+
+        .filter-group.small {
+            flex: 0 0 auto;
+            min-width: 160px;
+        }
+
+        .filter-group.compact {
+            flex: 0 0 auto;
+            min-width: auto;
+        }
+
+        .filter-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .input, .select {
+            padding: 8px 12px;
+            font-family: inherit;
+            font-size: 13px;
+            color: var(--text);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            outline: none;
+            width: 100%;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        .select {
+            cursor: pointer;
+        }
+
+        .select-size {
+            width: 72px !important;
+            min-width: 72px !important;
+            padding: 8px 6px 8px 12px !important;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .input:focus, .select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 16px;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+
+        .btn-primary { background: var(--primary); color: #ffffff; }
+        .btn-primary:hover { background: var(--primary-hover); }
+
+        .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+        .btn-secondary:hover { background: var(--border); }
+
+        .btn-sm { padding: 4px 10px; font-size: 12px; }
+        .btn-advance {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+            font-weight: 600;
+        }
+        .btn-advance:hover:not(:disabled) {
+            background: #2563eb;
+            color: #ffffff;
+            border-color: #2563eb;
+        }
+        .btn-advance:disabled {
+            background: #f1f5f9;
+            color: #94a3b8;
+            border: 1px solid #e2e8f0;
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .btn-delete { background: var(--danger-bg); color: #b91c1c; border: 1px solid #fecaca; }
+        .btn-delete:hover { background: #fee2e2; }
+
+        .btn-view { background: #f1f5f9; color: var(--text); border: 1px solid var(--border); }
+        .btn-view:hover { background: #e2e8f0; }
+
+        /* ===== Table ===== */
+        .table-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            width: 100%;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        thead th {
+            background: #f1f5f9;
+            color: var(--text-muted);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        tbody td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        /* ===== Badges & Pills ===== */
+        .ticket-id {
+            font-family: 'Roboto Mono', ui-monospace, monospace;
+            font-weight: 600;
+            color: var(--primary);
+            background: #f1f5f9;
+            padding: 3px 7px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            font-size: 12px;
+        }
+
+        .user-cell {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .username {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .user-id {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .description-cell {
+            max-width: 260px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--text-muted);
+        }
+
+        .badge-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 9px;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+        }
+
+        /* Priorities */
+        .priority-CRITICAL { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        .priority-HIGH     { background: #fff7ed; color: #c2410c; border: 1px solid #ffedd5; }
+        .priority-MEDIUM   { background: #fefce8; color: #854d0e; border: 1px solid #fef08a; }
+        .priority-LOW      { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
+        /* Categories */
+        .category-TECHNICAL   { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+        .category-BANKING     { background: #f5f3ff; color: #5b21b6; border: 1px solid #ddd6fe; }
+        .category-NOT_DEFINED { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
+        /* Statuses */
+        .status-PENDING     { background: #fefce8; color: #854d0e; border: 1px solid #fef08a; }
+        .status-OPEN        { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+        .status-IN_PROGRESS { background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; }
+        .status-DONE        { background: #ccfbf1; color: #115e59; border: 1px solid #99f6e4; }
+        .status-RESOLVED    { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+        .status-CLOSED      { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; }
+
+        .actions-cell {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        /* ===== Empty State ===== */
+        .empty-state {
+            padding: 48px 24px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .empty-state h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+
+        /* ===== Pagination ===== */
+        .pagination-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            background: #ffffff;
+            border-top: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .pagination-info {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* ===== Modal ===== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 16px;
+        }
+
+        .modal-overlay.hidden {
+            display: none !important;
+        }
+
+        .modal {
+            background: #ffffff;
+            border-radius: var(--radius);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            max-width: 650px;
+            width: 100%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            background: #f8fafc;
+        }
+
+        .modal-header h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .close-btn {
+            background: transparent;
+            border: none;
+            font-size: 20px;
+            color: var(--text-muted);
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .close-btn:hover {
+            color: var(--text);
+        }
+
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .detail-row {
+            display: grid;
+            grid-template-columns: 130px 1fr;
+            gap: 10px;
+            font-size: 13px;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .detail-value {
+            color: var(--text);
+            word-break: break-word;
+        }
+
+        .json-box {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 12px;
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 12px;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .modal-footer {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 14px 20px;
+            border-top: 1px solid var(--border);
+            background: #f8fafc;
+        }
+
+        /* ===== Toast ===== */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 18px;
+            border-radius: var(--radius-sm);
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: var(--shadow-md);
+            z-index: 2000;
+            transition: opacity 0.3s ease;
+        }
+
+        .toast-success { background: #059669; }
+        .toast-error { background: #dc2626; }
+        .toast.hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header class="admin-header">
+        <div class="header-title">
+            <h1>Support Tickets Portal <span class="badge-admin">Admin</span></h1>
+            <p>Manage, inspect, advance status, and delete customer support tickets.</p>
+        </div>
+        <div class="header-stats">
+            <div class="stat-badge">Total Tickets: <span id="statTotalCount">0</span></div>
+            <div class="stat-badge">Current Page: <span id="statPageCount">1</span></div>
+        </div>
+    </header>
+
+    <div class="filter-panel">
+        <div class="filter-group" style="flex: 2 1 280px;">
+            <span class="filter-label">Search:</span>
+            <input type="text" id="keywordInput" class="input" placeholder="Search ticket ID, username, description…">
+        </div>
+        <div class="filter-group small" style="min-width: 165px;">
+            <span class="filter-label">Sort By:</span>
+            <select id="sortBySelect" class="select">
+                <option value="createdAt" selected>Created Date</option>
+                <option value="priority">Priority</option>
+                <option value="status">Status</option>
+                <option value="ticketId">Ticket ID</option>
+                <option value="username">Username</option>
+            </select>
+        </div>
+        <div class="filter-group small" style="min-width: 165px;">
+            <span class="filter-label">Order:</span>
+            <select id="sortDirectionSelect" class="select">
+                <option value="desc" selected>Newest First</option>
+                <option value="asc">Oldest First</option>
+            </select>
+        </div>
+        <div class="filter-group compact">
+            <span class="filter-label">Size:</span>
+            <select id="sizeSelect" class="select select-size" title="Tickets per page">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+            </select>
+        </div>
+        <button id="searchBtn" class="btn btn-primary">Filter</button>
+        <button id="resetBtn" class="btn btn-secondary">Reset</button>
+    </div>
+
+    <div class="table-container">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ticket ID</th>
+                        <th>User</th>
+                        <th>Description</th>
+                        <th>Category</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="ticketsTbody">
+                    <tr>
+                        <td colspan="8" class="empty-state">
+                            <h3>Loading tickets…</h3>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination-bar">
+            <div class="pagination-info" id="paginationInfo">Showing 0 tickets</div>
+            <div class="pagination-controls">
+                <button id="firstPageBtn" class="btn btn-secondary btn-sm" disabled>&laquo; First</button>
+                <button id="prevPageBtn" class="btn btn-secondary btn-sm" disabled>&lsaquo; Prev</button>
+                <span id="pageIndicator" style="font-size: 12px; font-weight: 600; padding: 0 8px;">Page 1</span>
+                <button id="nextPageBtn" class="btn btn-secondary btn-sm" disabled>Next &rsaquo;</button>
+                <button id="lastPageBtn" class="btn btn-secondary btn-sm" disabled>Last &raquo;</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Detail Modal ===== -->
+<div id="detailModal" class="modal-overlay hidden">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Ticket Details &mdash; <span id="modalTicketId" class="ticket-id"></span></h3>
+            <button class="close-btn" onclick="closeModal('detailModal')">&times;</button>
+        </div>
+        <div class="modal-body" id="modalBody">
+            <div class="detail-row"><span class="detail-label">Internal UUID:</span><span class="detail-value" id="modalId"></span></div>
+            <div class="detail-row"><span class="detail-label">Username:</span><span class="detail-value" id="modalUsername"></span></div>
+            <div class="detail-row"><span class="detail-label">User ID:</span><span class="detail-value" id="modalUserId"></span></div>
+            <div class="detail-row"><span class="detail-label">Category:</span><span class="detail-value" id="modalCategory"></span></div>
+            <div class="detail-row"><span class="detail-label">Priority:</span><span class="detail-value" id="modalPriority"></span></div>
+            <div class="detail-row"><span class="detail-label">Current Status:</span><span class="detail-value" id="modalStatus"></span></div>
+            <div class="detail-row"><span class="detail-label">Created At:</span><span class="detail-value" id="modalCreatedAt"></span></div>
+            <div class="detail-row"><span class="detail-label">Updated At:</span><span class="detail-value" id="modalUpdatedAt"></span></div>
+            <div class="detail-row"><span class="detail-label">Description:</span><span class="detail-value" id="modalDescription" style="white-space: pre-wrap;"></span></div>
+            <div>
+                <span class="detail-label">Raw JSON:</span>
+                <pre class="json-box" id="modalJson"></pre>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('detailModal')">Close</button>
+            <button id="modalAdvanceBtn" class="btn btn-advance">Advance Status ➜</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Delete Confirmation Modal ===== -->
+<div id="deleteModal" class="modal-overlay hidden">
+    <div class="modal" style="max-width: 440px;">
+        <div class="modal-header">
+            <h3 style="color: var(--danger);">Confirm Ticket Deletion</h3>
+            <button class="close-btn" onclick="closeModal('deleteModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Are you sure you want to permanently delete ticket <strong id="deleteTicketIdLabel"></strong>?</p>
+            <p style="font-size: 12px; color: var(--text-muted);">This action cannot be undone.</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('deleteModal')">Cancel</button>
+            <button id="confirmDeleteBtn" class="btn btn-delete">Delete Permanently</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Toast ===== -->
+<div id="toast" class="toast hidden"></div>
+
+<script>
+(function () {
+    let currentPage = 0;
+    let totalPages = 1;
+    let currentTicketToDelete = null;
+    let currentTicketInDetail = null;
+
+    const tbody = document.getElementById('ticketsTbody');
+    const keywordInput = document.getElementById('keywordInput');
+    const sortBySelect = document.getElementById('sortBySelect');
+    const sortDirectionSelect = document.getElementById('sortDirectionSelect');
+    const sizeSelect = document.getElementById('sizeSelect');
+    const searchBtn = document.getElementById('searchBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    const firstPageBtn = document.getElementById('firstPageBtn');
+    const prevPageBtn = document.getElementById('prevPageBtn');
+    const nextPageBtn = document.getElementById('nextPageBtn');
+    const lastPageBtn = document.getElementById('lastPageBtn');
+    const pageIndicator = document.getElementById('pageIndicator');
+    const paginationInfo = document.getElementById('paginationInfo');
+    const statTotalCount = document.getElementById('statTotalCount');
+    const statPageCount = document.getElementById('statPageCount');
+    const toast = document.getElementById('toast');
+
+    function showToast(message, isError = false) {
+        toast.textContent = message;
+        toast.className = 'toast ' + (isError ? 'toast-error' : 'toast-success');
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), 3500);
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = String(text);
+        return div.innerHTML;
+    }
+
+    function formatDate(isoStr) {
+        if (!isoStr) return '-';
+        try {
+            const d = new Date(isoStr);
+            return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        } catch (_) {
+            return isoStr;
+        }
+    }
+
+    async function loadTickets(page = 0) {
+        currentPage = page;
+        const size = parseInt(sizeSelect.value, 10) || 10;
+        const keyword = keywordInput.value.trim();
+        const sortBy = sortBySelect.value;
+        const sortDirection = sortDirectionSelect.value;
+
+        const params = new URLSearchParams({
+            page: currentPage,
+            size: size,
+            sortBy: sortBy,
+            sortDirection: sortDirection
+        });
+        if (keyword) {
+            params.append('keyword', keyword);
+        }
+
+        tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><h3>Loading tickets…</h3></td></tr>';
+
+        try {
+            const res = await fetch('/api/admin/tickets?' + params.toString(), {
+                headers: { 'X-API-Version': 'v1' }
+            });
+            if (!res.ok) throw new Error('Failed to load tickets: ' + res.status);
+            const data = await res.json();
+
+            renderTable(data);
+        } catch (err) {
+            console.error(err);
+            tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><h3 style="color: var(--danger);">Failed to load tickets</h3><p>' + escapeHtml(err.message) + '</p></td></tr>';
+            showToast(err.message, true);
+        }
+    }
+
+    function getNextStatus(status) {
+        const s = (status || '').toUpperCase();
+        switch (s) {
+            case 'PENDING': return 'OPEN';
+            case 'OPEN': return 'IN_PROGRESS';
+            case 'IN_PROGRESS': return 'DONE';
+            case 'DONE': return 'RESOLVED';
+            case 'RESOLVED': return 'CLOSED';
+            default: return null;
+        }
+    }
+
+    function renderTable(data) {
+        const contents = data.contents || [];
+        totalPages = data.totalPages || 1;
+        const totalElements = data.totalElements || 0;
+
+        statTotalCount.textContent = totalElements;
+        statPageCount.textContent = (currentPage + 1) + ' / ' + totalPages;
+        pageIndicator.textContent = 'Page ' + (currentPage + 1) + ' of ' + totalPages;
+        paginationInfo.textContent = 'Showing ' + contents.length + ' of ' + totalElements + ' total tickets';
+
+        firstPageBtn.disabled = data.isFirstPage;
+        prevPageBtn.disabled = !data.hasPrevious && data.isFirstPage;
+        nextPageBtn.disabled = data.isLastPage;
+        lastPageBtn.disabled = data.isLastPage;
+
+        if (contents.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><h3>No tickets found</h3><p>Try adjusting your search criteria or reset filters.</p></td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = contents.map(t => {
+            const nextStatus = getNextStatus(t.status);
+            const isClosed = !nextStatus;
+            const advanceBtnLabel = nextStatus ? `${escapeHtml(nextStatus)} ➜` : 'Closed';
+            const advanceBtnTitle = nextStatus ? `Advance to ${escapeHtml(nextStatus)}` : 'Already closed';
+            return `
+                <tr>
+                    <td><span class="ticket-id">${escapeHtml(t.ticketId)}</span></td>
+                    <td>
+                        <div class="user-cell">
+                            <span class="username">${escapeHtml(t.username)}</span>
+                            <span class="user-id">${escapeHtml(t.userId || '-')}</span>
+                        </div>
+                    </td>
+                    <td><div class="description-cell" title="${escapeHtml(t.description)}">${escapeHtml(t.description)}</div></td>
+                    <td><span class="badge-pill category-${escapeHtml(t.category)}">${escapeHtml(t.category)}</span></td>
+                    <td><span class="badge-pill priority-${escapeHtml(t.priority)}">${escapeHtml(t.priority)}</span></td>
+                    <td><span class="badge-pill status-${escapeHtml(t.status)}">${escapeHtml(t.status)}</span></td>
+                    <td style="font-size: 12px; color: var(--text-muted);">${formatDate(t.createdAt)}</td>
+                    <td>
+                        <div class="actions-cell" style="justify-content: flex-end;">
+                            <button class="btn btn-view btn-sm" onclick="openDetailModal('${escapeHtml(t.ticketId)}')">Details</button>
+                            <button class="btn btn-advance btn-sm" onclick="advanceStatus('${escapeHtml(t.ticketId)}')" ${isClosed ? 'disabled' : ''} title="${advanceBtnTitle}">${advanceBtnLabel}</button>
+                            <button class="btn btn-delete btn-sm" onclick="confirmDelete('${escapeHtml(t.ticketId)}')">Delete</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    window.openDetailModal = async function (ticketId) {
+        try {
+            const res = await fetch('/api/admin/tickets/' + ticketId, {
+                headers: { 'X-API-Version': 'v1' }
+            });
+            if (!res.ok) throw new Error('Unable to fetch details for ' + ticketId);
+            const t = await res.json();
+            currentTicketInDetail = t;
+
+            document.getElementById('modalTicketId').textContent = t.ticketId;
+            document.getElementById('modalId').textContent = t.id;
+            document.getElementById('modalUsername').textContent = t.username;
+            document.getElementById('modalUserId').textContent = t.userId;
+            document.getElementById('modalCategory').innerHTML = `<span class="badge-pill category-${t.category}">${t.category}</span>`;
+            document.getElementById('modalPriority').innerHTML = `<span class="badge-pill priority-${t.priority}">${t.priority}</span>`;
+            document.getElementById('modalStatus').innerHTML = `<span class="badge-pill status-${t.status}">${t.status}</span>`;
+            document.getElementById('modalCreatedAt').textContent = formatDate(t.createdAt);
+            document.getElementById('modalUpdatedAt').textContent = formatDate(t.updatedAt);
+            document.getElementById('modalDescription').textContent = t.description;
+            document.getElementById('modalJson').textContent = JSON.stringify(t, null, 2);
+
+            const advanceBtn = document.getElementById('modalAdvanceBtn');
+            const nextStatus = getNextStatus(t.status);
+            if (!nextStatus) {
+                advanceBtn.disabled = true;
+                advanceBtn.textContent = 'Already Closed';
+                advanceBtn.onclick = null;
+            } else {
+                advanceBtn.disabled = false;
+                advanceBtn.textContent = `Advance to ${nextStatus} ➜`;
+                advanceBtn.onclick = () => {
+                    closeModal('detailModal');
+                    advanceStatus(t.ticketId);
+                };
+            }
+
+            document.getElementById('detailModal').classList.remove('hidden');
+        } catch (err) {
+            showToast(err.message, true);
+        }
+    };
+
+    window.advanceStatus = async function (ticketId) {
+        try {
+            const res = await fetch('/api/admin/tickets/' + ticketId + '/status', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-API-Version': 'v1'
+                },
+                body: JSON.stringify({})
+            });
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.message || 'Status advance failed with status ' + res.status);
+            }
+            const updated = await res.json();
+            showToast(`Ticket ${ticketId} status advanced to ${updated.status}`);
+            loadTickets(currentPage);
+        } catch (err) {
+            showToast(err.message, true);
+        }
+    };
+
+    window.confirmDelete = function (ticketId) {
+        currentTicketToDelete = ticketId;
+        document.getElementById('deleteTicketIdLabel').textContent = ticketId;
+        document.getElementById('deleteModal').classList.remove('hidden');
+    };
+
+    document.getElementById('confirmDeleteBtn').addEventListener('click', async function () {
+        if (!currentTicketToDelete) return;
+        const ticketId = currentTicketToDelete;
+        closeModal('deleteModal');
+        try {
+            const res = await fetch('/api/admin/tickets/' + ticketId, {
+                method: 'DELETE',
+                headers: { 'X-API-Version': 'v1' }
+            });
+            if (!res.ok && res.status !== 204) throw new Error('Delete failed: ' + res.status);
+            showToast(`Ticket ${ticketId} deleted successfully`);
+            loadTickets(currentPage);
+        } catch (err) {
+            showToast(err.message, true);
+        } finally {
+            currentTicketToDelete = null;
+        }
+    });
+
+    window.closeModal = function (id) {
+        document.getElementById(id).classList.add('hidden');
+    };
+
+    // Filters and pagination listeners
+    searchBtn.addEventListener('click', () => loadTickets(0));
+    resetBtn.addEventListener('click', () => {
+        keywordInput.value = '';
+        sortBySelect.value = 'createdAt';
+        sortDirectionSelect.value = 'desc';
+        sizeSelect.value = '10';
+        loadTickets(0);
+    });
+
+    keywordInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') loadTickets(0);
+    });
+
+    firstPageBtn.addEventListener('click', () => loadTickets(0));
+    prevPageBtn.addEventListener('click', () => { if (currentPage > 0) loadTickets(currentPage - 1); });
+    nextPageBtn.addEventListener('click', () => { if (currentPage < totalPages - 1) loadTickets(currentPage + 1); });
+    lastPageBtn.addEventListener('click', () => loadTickets(totalPages - 1));
+    sizeSelect.addEventListener('change', () => loadTickets(0));
+    sortBySelect.addEventListener('change', () => loadTickets(0));
+    sortDirectionSelect.addEventListener('change', () => loadTickets(0));
+
+    // Initial load
+    loadTickets(0);
+})();
+</script>
+
+</body>
+</html>

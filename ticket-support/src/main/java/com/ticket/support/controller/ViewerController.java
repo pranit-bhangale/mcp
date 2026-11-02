@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class ViewerController {
 
-    @GetMapping("/api/agent/viewer")
+    @GetMapping(value = "/api/agent/viewer", version = "v1")
     public String viewer(Model model) {
         model.addAttribute("version", "v1");
         return "agent/viewer";
