@@ -1,3 +1,78 @@
 spring:
   application:
     name: ticket-support
+  # Database Configuration
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:ticket_db}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:140503}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 10
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      pool-name: TicketPool
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+        use_sql_comments: true
+  # Flyway Migration Configuration
+  flyway:
+    enabled: false
+    locations: classpath:db/migration
+    table: flyway_schema_history
+    baseline-on-migrate: true
+    baseline-version: 1
+    validate-on-migrate: true
+    clean-disabled: true
+    out-of-order: false
+  # AI Configuration
+  ai:
+    chat:
+      client:
+        enabled: true
+      memory:
+        repository:
+          jdbc:
+            initialize-schema: always
+    openai:
+      api-key: ${CHAT_KEY}
+      base-url: ${CHAT_BASE_URL}
+      chat:
+        model: ${CHAT_MODEL}
+        temperature: 0.2
+        max-completion-tokens: 2048
+      embedding:
+        api-key: ${EMBEDDING_KEY}
+        base-url: ${EMBEDDING_BASE_URL}
+        model: ${EMBEDDING_MODEL}
+        dimensions: 2048
+      timeout: 120s
+    # SafeGuard Configuration
+    advisor:
+      safeguard:
+        blocked-words:
+          - env
+# Logging Configuration
+logging:
+  file:
+    name: ${LOG_PATH:logs/ticket.log}
+  level:
+    root: ${LOG_LEVEL_ROOT:INFO}
+    com.ticket.support: ${LOG_LEVEL:DEBUG}
+  logback:
+    rollingpolicy:
+      file-name-pattern: ${LOG_PATH:logs/ticket.log}.%d{yyyy-MM-dd}.%i.log.gz
+      max-file-size: 50MB
+      total-size-cap: 1GB
+      max-history: 30
+      clean-history-on-start: false
