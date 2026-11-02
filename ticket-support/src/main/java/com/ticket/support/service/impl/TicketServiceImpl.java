@@ -2,6 +2,8 @@ package com.ticket.support.service.impl;
 
 import com.ticket.support.dto.TicketRequest;
 import com.ticket.support.dto.TicketResponse;
+import com.ticket.support.dto.UpdateRequest;
+import com.ticket.support.entity.Status;
 import com.ticket.support.entity.Ticket;
 import com.ticket.support.repository.TicketRepository;
 import com.ticket.support.service.TicketService;
@@ -55,6 +57,33 @@ public class TicketServiceImpl implements TicketService {
     public TicketResponse fetchTicketDetailById(final String ticketId) {
         final Ticket ticket = this.ticketRepository.findByTicketId(ticketId)
                 .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + ticketId));
+        return TicketResponse.builder()
+                .id(ticket.getId())
+                .ticketId(ticket.getTicketId())
+                .userId(ticket.getUserId())
+                .username(ticket.getUsername())
+                .description(ticket.getDescription())
+                .priority(ticket.getPriority())
+                .category(ticket.getCategory())
+                .status(ticket.getStatus())
+                .createdAt(ticket.getCreatedAt())
+                .updatedAt(ticket.getUpdatedAt())
+                .build();
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
+    public TicketResponse updateTicket(final String ticketId, final UpdateRequest request) {
+        final Ticket ticket = this.ticketRepository.findByTicketId(ticketId)
+                .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + ticketId));
+        final Status currentStatus = ticket.getStatus();
+        final Status nextStatus = switch (currentStatus) {
+            case PENDING -> Status.OPEN;
+            case OPEN -> Status.DONE;
+            case DONE -> Status.CLOSED;
+            case CLOSED -> throw new IllegalStateException("Ticket is already closed and cannot be updated.");
+        };
+        ticket.setStatus(nextStatus);
         return TicketResponse.builder()
                 .id(ticket.getId())
                 .ticketId(ticket.getTicketId())
