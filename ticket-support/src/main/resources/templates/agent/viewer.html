@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Agent Streaming Viewer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #ffffff;
+            --bg-panel: #f8fafc;
+            --bg-card: #ffffff;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --border-hover: #cbd5e1;
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --primary: #0f172a;
+            --primary-hover: #1e293b;
+            --accent: #10b981;
+            --accent-bg: #ecfdf5;
+            --streaming: #3b82f6;
+            --streaming-bg: #eff6ff;
+            --danger: #ef4444;
+            --danger-bg: #fef2f2;
+            --warning: #f59e0b;
+            --radius: 10px;
+            --radius-sm: 6px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            padding: 24px;
+            min-height: 100vh;
+        }
+
+        /* ===== Header ===== */
+        .dashboard {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        header.header {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text);
+            letter-spacing: -0.01em;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 14px;
+            font-weight: 400;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--accent-bg);
+            border: 1px solid #bbf7d0;
+            color: #166534;
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .status-indicator.disconnected {
+            background: var(--danger-bg);
+            border-color: #fecaca;
+            color: #991b1b;
+        }
+
+        .status-indicator.streaming {
+            background: var(--streaming-bg);
+            border-color: #bfdbfe;
+            color: #1d4ed8;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            display: inline-block;
+        }
+
+        .dot.connected { background: #10b981; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2); }
+        .dot.streaming { background: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); animation: pulse 1.5s infinite; }
+        .dot.disconnected { background: #ef4444; }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* ===== Toolbar ===== */
+        .toolbar {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        @media (min-width: 768px) {
+            .toolbar {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+            }
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex: 1;
+            min-width: 0;
+        }
+
+        #prompt {
+            flex: 1;
+            min-width: 0;
+            padding: 10px 16px;
+            font-family: inherit;
+            font-size: 14px;
+            color: var(--text);
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        #prompt::placeholder {
+            color: var(--text-muted);
+        }
+
+        #prompt:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 20px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .send-btn {
+            background: var(--primary);
+            color: #ffffff;
+        }
+
+        .send-btn:hover:not(:disabled) {
+            background: var(--primary-hover);
+        }
+
+        .send-btn:active:not(:disabled) {
+            transform: translateY(0.5px);
+        }
+
+        .clear-btn {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        .clear-btn:hover:not(:disabled) {
+            background: var(--bg-panel);
+            border-color: var(--border-hover);
+            color: var(--text);
+        }
+
+        .copy-btn {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+
+        .copy-btn:hover {
+            background: var(--bg-panel);
+            border-color: var(--border-hover);
+            color: var(--text);
+        }
+
+        .copy-btn.copied {
+            color: var(--accent);
+            border-color: #bbf7d0;
+            background: var(--accent-bg);
+        }
+
+        /* ===== Loading ===== */
+        .loading {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--streaming-bg);
+            border: 1px solid #bfdbfe;
+            color: #1d4ed8;
+            padding: 8px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .loading.hidden {
+            display: none !important;
+        }
+
+        .spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid #bfdbfe;
+            border-top-color: #1d4ed8;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ===== Grid / Cards ===== */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+
+        @media (min-width: 1024px) {
+            .grid {
+                grid-template-columns: 1fr 1.5fr;
+            }
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            height: fit-content;
+        }
+
+        .card.wide {
+            grid-column: 1 / -1;
+        }
+
+        @media (min-width: 1024px) {
+            .card.wide.tokens {
+                grid-column: 1 / -1;
+            }
+            .card.wide.tools {
+                grid-column: 1 / -1;
+            }
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-panel);
+            border-radius: var(--radius) var(--radius) 0 0;
+        }
+
+        .card-header h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text);
+            letter-spacing: -0.01em;
+        }
+
+        .card-header .badge-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .card-body {
+            padding: 18px;
+            overflow: auto;
+        }
+
+        /* ===== Badges ===== */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 4px 8px;
+            border-radius: var(--radius-sm);
+        }
+
+        .badge-token { background: var(--streaming-bg); color: #1d4ed8; border: 1px solid #bfdbfe; }
+        .badge-tool  { background: #f1f5f9; color: var(--text-muted); border: 1px solid var(--border); }
+        .badge-complete { background: var(--accent-bg); color: #166534; border: 1px solid #bbf7d0; }
+        .badge-error   { background: var(--danger-bg); color: #991b1b; border: 1px solid #fecaca; }
+        .badge-done    { background: var(--accent-bg); color: #166534; border: 1px solid #bbf7d0; }
+
+        /* ===== Live Tokens ===== */
+        #tokens {
+            font-family: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .token-chunk {
+            display: inline;
+        }
+
+        .streaming-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #1d4ed8;
+            margin-top: 10px;
+            font-weight: 500;
+        }
+
+        .streaming-indicator.hidden {
+            display: none;
+        }
+
+        /* ===== Tool Events ===== */
+        .tool-event {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            margin-bottom: 10px;
+            background: var(--bg-card);
+        }
+
+        .tool-event:last-child {
+            margin-bottom: 0;
+        }
+
+        .tool-event.running {
+            border-color: #bfdbfe;
+            background: var(--streaming-bg);
+        }
+
+        .tool-event-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .tool-name {
+            font-family: 'Roboto Mono', ui-monospace, monospace;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .tool-payload {
+            font-family: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            color: var(--text-muted);
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
+            max-height: 200px;
+            overflow: auto;
+        }
+
+        .tool-events-empty {
+            color: var(--text-muted);
+            font-size: 13px;
+            text-align: center;
+            padding: 20px;
+        }
+
+
+        /* ===== Toast ===== */
+        .toast {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: var(--shadow-md);
+            z-index: 1000;
+            min-width: 260px;
+        }
+
+        .toast-error {
+            background: var(--danger);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .toast.hidden {
+            display: none;
+        }
+
+        /* ===== Utilities ===== */
+        .hidden { display: none !important; }
+        .mt-2 { margin-top: 8px; }
+        .text-xs { font-size: 11px; color: var(--text-muted); }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+    <header class="header">
+        <div class="header-top">
+            <h1>AI Agent Streaming Viewer</h1>
+            <div class="status-indicator" id="statusIndicator">
+                <span class="dot connected" id="statusDot"></span>
+                <span id="statusText">Connected</span>
+            </div>
+        </div>
+        <p class="subtitle">Monitor AI responses, tool executions and streaming events.</p>
+    </header>
+
+    <div class="toolbar">
+        <div class="input-group">
+            <input type="text" id="prompt" value="Hello" placeholder="Type your message…">
+            <button id="sendBtn" class="btn send-btn">Send</button>
+            <button id="clearBtn" class="btn clear-btn">Clear</button>
+        </div>
+        <div class="loading hidden" id="loading">
+            <div class="spinner"></div>
+            <span>AI is processing&hellip;</span>
+        </div>
+    </div>
+
+    <div class="grid">
+        <section class="card wide tokens">
+            <div class="card-header">
+                <div class="badge-row">
+                    <span class="badge badge-token">TOKEN</span>
+                    <span class="badge badge-streaming hidden" id="streamBadge">STREAMING</span>
+                </div>
+                <h3>Live Tokens</h3>
+            </div>
+            <div class="card-body">
+                <pre id="tokens"></pre>
+                <div class="streaming-indicator hidden" id="streamingIndicator">
+                    <span class="dot streaming"></span>
+                    Streaming tokens&hellip;
+                </div>
+            </div>
+        </section>
+
+        <section class="card wide tools">
+            <div class="card-header">
+                <div class="badge-row">
+                    <span class="badge badge-tool">TOOL</span>
+                    <span class="badge badge-complete hidden" id="toolDoneBadge">DONE</span>
+                </div>
+                <h3>Tool Events</h3>
+            </div>
+            <div class="card-body" id="tools">
+                <div class="tool-events-empty">No tool events yet.</div>
+            </div>
+        </section>
+    </div>
+
+    <div id="errorToast" class="toast toast-error hidden"></div>
+</div>
+
+<script>
+(function () {
+    const promptInput = document.getElementById('prompt');
+    const sendBtn = document.getElementById('sendBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const tokensEl = document.getElementById('tokens');
+    const toolsEl = document.getElementById('tools');
+    const loadingEl = document.getElementById('loading');
+    const streamBadgeEl = document.getElementById('streamBadge');
+    const streamingIndicatorEl = document.getElementById('streamingIndicator');
+    const statusIndicator = document.getElementById('statusIndicator');
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+    const errorToast = document.getElementById('errorToast');
+    const toolDoneBadge = document.getElementById('toolDoneBadge');
+
+    let reader = null;
+    let controller = null;
+    let isStreaming = false;
+
+    function setStatus(kind) {
+        const classes = statusIndicator.classList;
+        classes.remove('connected', 'streaming', 'disconnected');
+        statusDot.classList.remove('connected', 'streaming', 'disconnected');
+        switch (kind) {
+            case 'connected':
+                classes.add('connected');
+                statusDot.classList.add('connected');
+                statusText.textContent = 'Connected';
+                break;
+            case 'streaming':
+                classes.add('streaming');
+                statusDot.classList.add('streaming');
+                statusText.textContent = 'Streaming';
+                break;
+            case 'disconnected':
+                classes.add('disconnected');
+                statusDot.classList.add('disconnected');
+                statusText.textContent = 'Disconnected';
+                break;
+        }
+    }
+
+    function showLoading(show) {
+        isStreaming = show;
+        loadingEl.classList.toggle('hidden', !show);
+        streamBadgeEl.classList.toggle('hidden', !show);
+        streamingIndicatorEl.classList.toggle('hidden', !show);
+        setStatus(show ? 'streaming' : 'connected');
+        sendBtn.disabled = show;
+        promptInput.disabled = show;
+    }
+
+    function scrollToBottom(el) {
+        requestAnimationFrame(() => {
+            el.scrollTop = el.scrollHeight;
+        });
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function showError(message) {
+        errorToast.textContent = message;
+        errorToast.classList.remove('hidden');
+        setTimeout(() => {
+            errorToast.classList.add('hidden');
+        }, 5000);
+    }
+
+    function clearAll() {
+        tokensEl.textContent = '';
+        toolsEl.innerHTML = '<div class="tool-events-empty">No tool events yet.</div>';
+        toolDoneBadge.classList.add('hidden');
+        streamBadgeEl.classList.add('hidden');
+        streamingIndicatorEl.classList.add('hidden');
+        setStatus('connected');
+    }
+
+    function addToolEvent(event) {
+        const empty = toolsEl.querySelector('.tool-events-empty');
+        if (empty) empty.remove();
+
+        const item = document.createElement('div');
+        item.className = 'tool-event';
+
+        const name = escapeHtml(event.tool || event.name || 'unknown');
+        const status = escapeHtml(event.status || 'running');
+        const payload = JSON.stringify(event.payload ?? event, null, 2);
+
+        let statusClass = '';
+        if (status === 'success') statusClass = 'badge-complete';
+        else if (status === 'error') statusClass = 'badge-error';
+        else statusClass = 'badge-tool';
+
+        item.innerHTML =
+            '<div class="tool-event-header">' +
+            '<span class="tool-name">' + name + '</span>' +
+            '<span class="badge ' + statusClass + '">' + status.toUpperCase() + '</span>' +
+            '</div>' +
+            '<div class="tool-payload">' + escapeHtml(payload) + '</div>';
+
+        toolsEl.appendChild(item);
+        scrollToBottom(toolsEl);
+    }
+
+    async function sendMessage() {
+        const prompt = promptInput.value.trim();
+        if (!prompt) return;
+
+        clearAll();
+        showLoading(true);
+
+        try {
+            const response = await fetch(
+                "http://localhost:8080/api/agent/chat",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "text/event-stream"
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        conversationId: "user-123"
+                    })
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error("Server responded with status " + response.status);
+            }
+
+            if (!response.body) {
+                throw new Error("No response body from server.");
+            }
+
+            controller = new AbortController();
+            reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = "";
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+
+                const events = buffer.split("\n\n");
+                buffer = events.pop();
+
+                for (const raw of events) {
+                    if (!raw.trim()) continue;
+
+                    const lines = raw.split("\n");
+                    const eventName = lines.find(
+                        line => line.startsWith("event:")
+                    )?.slice(6).trim();
+
+                    const data = lines
+                        .filter(line => line.startsWith("data:"))
+                        .map(line => line.slice(5).trimStart())
+                        .join("\n");
+
+                    if (!eventName) continue;
+
+                    if (eventName === "token") {
+                        try {
+                            const token = JSON.parse(data);
+                            tokensEl.textContent += token;
+                            scrollToBottom(tokensEl);
+                        } catch (e) {
+                            // If not JSON, append raw data preserving spacing
+                            tokensEl.textContent += data;
+                            scrollToBottom(tokensEl);
+                        }
+                    } else if (eventName === "tool") {
+                        try {
+                            const toolEvent = JSON.parse(data);
+                            addToolEvent(toolEvent);
+                        } catch (e) {
+                            console.warn("Failed to parse tool event:", e);
+                        }
+                    } else if (eventName === "error") {
+                        showError(data || "An error occurred during streaming.");
+                    } else if (eventName === "done") {
+                        toolDoneBadge.classList.remove('hidden');
+                    }
+                }
+            }
+        } catch (err) {
+            console.error(err);
+            setStatus('disconnected');
+            showError(err.message || "Network error: unable to connect to the streaming endpoint.");
+        } finally {
+            showLoading(false);
+            reader = null;
+            controller = null;
+        }
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+
+    promptInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    clearBtn.addEventListener('click', clearAll);
+
+    // Initialize status
+    setStatus('connected');
+})();
+</script>
+
+</body>
+</html>

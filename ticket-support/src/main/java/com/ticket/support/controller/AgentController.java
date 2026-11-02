@@ -22,7 +22,7 @@ public class AgentController {
 
     private final AiService aiService;
 
-    @PostMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @PostMapping(value = "/chat", version = "v1", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ServerSentEvent<String>> chat(@RequestBody @Valid ChatRequest request) {
         final String conversationId = StringUtils.hasText(request.conversationId()) ? request.conversationId() : "default";
         return this.aiService.askAiAgent(request.prompt(), conversationId);
