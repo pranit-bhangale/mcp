@@ -51,7 +51,7 @@ public class Ticket {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "ticket_id", nullable = false, unique = true)
+    @Column(name = "ticket_id", nullable = false)
     private String ticketId;
 
     @Column(name = "user_id", nullable = false)
@@ -60,7 +60,7 @@ public class Ticket {
     @Column(name = "username", nullable = false)
     private String username;
 
-    @Column(name = "desciption", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "description", nullable = false, columnDefinition = "TEXT")
     private String description;
 
     @Enumerated(EnumType.STRING)
