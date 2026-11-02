@@ -22,6 +22,7 @@ public class NvidiaService implements AiService {
     public Flux<ServerSentEvent<String>> askAiAgent(final String prompt, final String conversationId) {
         final ChatEventStream events = new ChatEventStream(this.jsonMapper);
         final Flux<ServerSentEvent<String>> answerTokens = this.chatClient.prompt()
+                .advisors(events.observer())
                 .advisors(spec -> spec.param(ChatMemory.CONVERSATION_ID, conversationId))
                 .user(prompt)
                 .tools(this.ticketTool)

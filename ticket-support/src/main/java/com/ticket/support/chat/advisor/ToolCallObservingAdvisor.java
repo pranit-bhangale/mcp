@@ -71,10 +71,15 @@ public class ToolCallObservingAdvisor implements CallAdvisor, StreamAdvisor {
         if (chatResponse == null) return;
         chatResponse.getResults().stream()
                 .flatMap(generation -> generation.getOutput().getToolCalls().stream())
-                .filter(toolCall -> StringUtils.hasText(toolCall.id()) && StringUtils.hasText(toolCall.name()))
-                .filter(toolCall -> this.started.add(toolCall.id()))
-                .forEach(toolCall -> this.listener
-                        .accept(new ToolCallEvent(toolCall.id(), toolCall.name(), ToolCallEvent.Phase.STARTED)));
+                .filter(toolCall -> StringUtils.hasText(toolCall.name()))
+                .filter(toolCall -> {
+                    String id = StringUtils.hasText(toolCall.id()) ? toolCall.id() : toolCall.name();
+                    return this.started.add(id);
+                })
+                .forEach(toolCall -> {
+                    String id = StringUtils.hasText(toolCall.id()) ? toolCall.id() : toolCall.name();
+                    this.listener.accept(new ToolCallEvent(id, toolCall.name(), ToolCallEvent.Phase.STARTED));
+                });
     }
 
     private void emitCompletions(ChatClientRequest request) {
@@ -82,9 +87,15 @@ public class ToolCallObservingAdvisor implements CallAdvisor, StreamAdvisor {
                 .filter(ToolResponseMessage.class::isInstance)
                 .map(ToolResponseMessage.class::cast)
                 .flatMap(message -> message.getResponses().stream())
-                .filter(response -> this.started.contains(response.id()) && this.completed.add(response.id()))
-                .forEach(response -> this.listener
-                        .accept(new ToolCallEvent(response.id(), response.name(), ToolCallEvent.Phase.COMPLETED)));
+                .filter(response -> {
+                    String id = StringUtils.hasText(response.id()) ? response.id() : response.name();
+                    return (this.started.contains(id) || this.started.contains(response.name()) || this.started.isEmpty())
+                            && this.completed.add(id);
+                })
+                .forEach(response -> {
+                    String id = StringUtils.hasText(response.id()) ? response.id() : response.name();
+                    this.listener.accept(new ToolCallEvent(id, response.name(), ToolCallEvent.Phase.COMPLETED, response.responseData()));
+                });
     }
 
     @Override

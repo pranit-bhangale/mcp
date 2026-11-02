@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Agent Streaming Viewer</title>
+    <title>Help Desk AI Agent</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -35,28 +35,44 @@
             padding: 0;
         }
 
+        html, body {
+            height: 100vh;
+            height: 100dvh;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Prevent full-window scroll */
+        }
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: var(--bg);
             color: var(--text);
             line-height: 1.5;
-            padding: 24px;
-            min-height: 100vh;
+            padding: 16px 24px;
+            display: flex;
+            flex-direction: column;
         }
 
         /* ===== Header ===== */
         .dashboard {
-            max-width: 1100px;
+            width: 100%;
+            max-width: 1440px;
             margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 0;
+            flex: 1;
         }
 
         header.header {
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            margin-bottom: 24px;
-            padding-bottom: 20px;
+            gap: 4px;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
             border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
         }
 
         .header-top {
@@ -128,12 +144,19 @@
         .toolbar {
             display: flex;
             flex-direction: column;
-            gap: 14px;
-            margin-bottom: 24px;
+            gap: 8px;
+            margin-bottom: 14px;
+            flex-shrink: 0;
+        }
+
+        .toolbar-main {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
         @media (min-width: 768px) {
-            .toolbar {
+            .toolbar-main {
                 flex-direction: row;
                 align-items: center;
                 justify-content: space-between;
@@ -143,7 +166,7 @@
         .input-group {
             display: flex;
             gap: 10px;
-            align-items: center;
+            align-items: stretch;
             flex: 1;
             min-width: 0;
         }
@@ -151,15 +174,18 @@
         #prompt {
             flex: 1;
             min-width: 0;
-            padding: 10px 16px;
+            padding: 8px 14px;
             font-family: inherit;
-            font-size: 14px;
+            font-size: 13.5px;
             color: var(--text);
             background: var(--bg-panel);
             border: 1px solid var(--border);
             border-radius: var(--radius-sm);
             outline: none;
             transition: border-color 0.2s, box-shadow 0.2s;
+            resize: none;
+            height: 48px;
+            line-height: 1.45;
         }
 
         #prompt::placeholder {
@@ -169,6 +195,12 @@
         #prompt:focus {
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+        }
+
+        .input-actions {
+            display: flex;
+            gap: 8px;
+            align-items: stretch;
         }
 
         .btn {
@@ -217,24 +249,37 @@
             color: var(--text);
         }
 
-        .copy-btn {
-            background: transparent;
+        /* ===== Prompt Chips ===== */
+        .prompt-chips {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding-top: 2px;
+        }
+
+        .chips-label {
+            font-size: 12px;
             color: var(--text-muted);
-            border: 1px solid var(--border);
-            padding: 6px 12px;
-            font-size: 13px;
+            font-weight: 500;
         }
 
-        .copy-btn:hover {
+        .chip {
             background: var(--bg-panel);
-            border-color: var(--border-hover);
+            border: 1px solid var(--border);
+            border-radius: 9999px;
+            padding: 4px 12px;
+            font-size: 12px;
+            font-family: inherit;
             color: var(--text);
+            cursor: pointer;
+            transition: all 0.15s ease;
         }
 
-        .copy-btn.copied {
-            color: var(--accent);
-            border-color: #bbf7d0;
-            background: var(--accent-bg);
+        .chip:hover {
+            background: var(--border);
+            border-color: var(--border-hover);
+            color: var(--primary);
         }
 
         /* ===== Loading ===== */
@@ -268,17 +313,15 @@
             to { transform: rotate(360deg); }
         }
 
-        /* ===== Grid / Cards ===== */
+        /* ===== Grid / Cards (Two-Column Layout) ===== */
         .grid {
             display: grid;
-            grid-template-columns: 1fr;
+            grid-template-columns: 1fr 1fr; /* Left: Tokens | Right: Tool Calls */
             gap: 16px;
-        }
-
-        @media (min-width: 1024px) {
-            .grid {
-                grid-template-columns: 1fr 1.5fr;
-            }
+            align-items: stretch;
+            flex: 1;
+            min-height: 0; /* Prevents overflow of the flex parent */
+            height: 100%;
         }
 
         .card {
@@ -288,30 +331,47 @@
             box-shadow: var(--shadow);
             display: flex;
             flex-direction: column;
-            height: fit-content;
-        }
-
-        .card.wide {
-            grid-column: 1 / -1;
-        }
-
-        @media (min-width: 1024px) {
-            .card.wide.tokens {
-                grid-column: 1 / -1;
-            }
-            .card.wide.tools {
-                grid-column: 1 / -1;
-            }
+            height: 100%;
+            min-height: 0;
+            overflow: hidden;
         }
 
         .card-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 14px 18px;
+            padding: 12px 18px;
             border-bottom: 1px solid var(--border);
             background: var(--bg-panel);
             border-radius: var(--radius) var(--radius) 0 0;
+            flex-shrink: 0;
+        }
+
+        .card-body {
+            padding: 16px 18px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            flex: 1;
+            min-height: 0; /* Column-only scroll */
+        }
+
+        /* Custom scrollbar for columns */
+        .card-body::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        .card-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .card-body::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+
+        .card-body::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
 
         .card-header h3 {
@@ -348,6 +408,7 @@
         .badge-complete { background: var(--accent-bg); color: #166534; border: 1px solid #bbf7d0; }
         .badge-error   { background: var(--danger-bg); color: #991b1b; border: 1px solid #fecaca; }
         .badge-done    { background: var(--accent-bg); color: #166534; border: 1px solid #bbf7d0; }
+        .badge-streaming { background: var(--streaming-bg); color: #1d4ed8; border: 1px solid #bfdbfe; }
 
         /* ===== Live Tokens ===== */
         #tokens {
@@ -357,10 +418,6 @@
             word-break: break-word;
             color: var(--text);
             line-height: 1.6;
-        }
-
-        .token-chunk {
-            display: inline;
         }
 
         .streaming-indicator {
@@ -377,43 +434,99 @@
             display: none;
         }
 
-        /* ===== Tool Events ===== */
-        .tool-event {
+        /* ===== Tool Stream UI (Matching Tool Stream Demo) ===== */
+        .tool-pills-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .tool-item {
             display: flex;
             flex-direction: column;
             gap: 8px;
-            padding: 12px;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            margin-bottom: 10px;
-            background: var(--bg-card);
+            transition: all 0.25s ease;
         }
 
-        .tool-event:last-child {
-            margin-bottom: 0;
-        }
-
-        .tool-event.running {
-            border-color: #bfdbfe;
-            background: var(--streaming-bg);
-        }
-
-        .tool-event-header {
-            display: flex;
+        .tool-pill {
+            display: inline-flex;
             align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            flex-wrap: wrap;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 13px;
+            font-weight: 500;
+            width: fit-content;
+            max-width: 100%;
+            user-select: none;
+            transition: all 0.25s ease;
         }
 
-        .tool-name {
+        /* Calling State */
+        .tool-pill.calling {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            color: #475569;
+        }
+
+        .tool-pill.calling .tool-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            line-height: 1;
+            animation: tool-spin 1s linear infinite;
+            color: #64748b;
+        }
+
+        @keyframes tool-spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Completed State */
+        .tool-pill.completed {
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            color: #065f46;
+        }
+
+        .tool-pill.completed .tool-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #059669;
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .tool-name-highlight {
             font-family: 'Roboto Mono', ui-monospace, monospace;
-            font-size: 12px;
             font-weight: 600;
-            color: var(--primary);
         }
 
-        .tool-payload {
+        .tool-details-btn {
+            font-size: 11px;
+            font-family: inherit;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 2px 7px;
+            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.06);
+            color: inherit;
+            border: none;
+            cursor: pointer;
+            margin-left: 4px;
+            transition: background 0.15s ease;
+        }
+
+        .tool-details-btn:hover {
+            background: rgba(0, 0, 0, 0.12);
+        }
+
+        .tool-payload-box {
             font-family: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 12px;
             white-space: pre-wrap;
@@ -423,8 +536,10 @@
             border: 1px solid var(--border);
             border-radius: var(--radius-sm);
             padding: 10px 12px;
-            max-height: 200px;
+            max-height: 220px;
             overflow: auto;
+            margin-left: 8px;
+            margin-top: 4px;
         }
 
         .tool-events-empty {
@@ -433,7 +548,6 @@
             text-align: center;
             padding: 20px;
         }
-
 
         /* ===== Toast ===== */
         .toast {
@@ -480,19 +594,29 @@
     </header>
 
     <div class="toolbar">
-        <div class="input-group">
-            <input type="text" id="prompt" value="Hello" placeholder="Type your message…">
-            <button id="sendBtn" class="btn send-btn">Send</button>
-            <button id="clearBtn" class="btn clear-btn">Clear</button>
+        <div class="toolbar-main">
+            <div class="input-group">
+                <textarea id="prompt" rows="2" placeholder="Type a prompt or choose a template below…">Please retrieve and show complete details for ticket ID: TKT-483921</textarea>
+                <div class="input-actions">
+                    <button id="sendBtn" class="btn send-btn">Send</button>
+                    <button id="clearBtn" class="btn clear-btn">Clear</button>
+                </div>
+            </div>
+            <div class="loading hidden" id="loading">
+                <div class="spinner"></div>
+                <span>AI is processing&hellip;</span>
+            </div>
         </div>
-        <div class="loading hidden" id="loading">
-            <div class="spinner"></div>
-            <span>AI is processing&hellip;</span>
+        <div class="prompt-chips">
+            <span class="chips-label">Templates:</span>
+            <button type="button" class="chip" data-prompt="Create a support ticket with userId: a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11, username: john_doe, summary: Database connection timeout, description: PostgreSQL connection pool exhausted on port 5432 after 30s, priority: HIGH, category: TECHNICAL">🎫 Create Ticket</button>
+            <button type="button" class="chip" data-prompt="Please retrieve and show complete details for ticket ID: TKT-483921">🔍 Check Ticket</button>
+            <button type="button" class="chip" data-prompt="Hello! How are you?">👋 Greeting</button>
         </div>
     </div>
 
     <div class="grid">
-        <section class="card wide tokens">
+        <section class="card tokens">
             <div class="card-header">
                 <div class="badge-row">
                     <span class="badge badge-token">TOKEN</span>
@@ -500,7 +624,7 @@
                 </div>
                 <h3>Live Tokens</h3>
             </div>
-            <div class="card-body">
+            <div class="card-body" id="tokensBody">
                 <pre id="tokens"></pre>
                 <div class="streaming-indicator hidden" id="streamingIndicator">
                     <span class="dot streaming"></span>
@@ -509,16 +633,18 @@
             </div>
         </section>
 
-        <section class="card wide tools">
+        <section class="card tools">
             <div class="card-header">
                 <div class="badge-row">
                     <span class="badge badge-tool">TOOL</span>
+                    <span class="badge badge-streaming hidden" id="toolRunningBadge">CALLING</span>
                     <span class="badge badge-complete hidden" id="toolDoneBadge">DONE</span>
                 </div>
                 <h3>Tool Events</h3>
             </div>
             <div class="card-body" id="tools">
-                <div class="tool-events-empty">No tool events yet.</div>
+                <div class="tool-events-empty" id="toolsEmpty">No tool events yet. Send a prompt that calls a tool (e.g. ticket lookup or creation) to see live executions.</div>
+                <div class="tool-pills-list" id="toolPillsList"></div>
             </div>
         </section>
     </div>
@@ -532,7 +658,10 @@
     const sendBtn = document.getElementById('sendBtn');
     const clearBtn = document.getElementById('clearBtn');
     const tokensEl = document.getElementById('tokens');
+    const tokensBody = document.getElementById('tokensBody');
     const toolsEl = document.getElementById('tools');
+    const toolsEmpty = document.getElementById('toolsEmpty');
+    const toolPillsList = document.getElementById('toolPillsList');
     const loadingEl = document.getElementById('loading');
     const streamBadgeEl = document.getElementById('streamBadge');
     const streamingIndicatorEl = document.getElementById('streamingIndicator');
@@ -541,10 +670,20 @@
     const statusText = document.getElementById('statusText');
     const errorToast = document.getElementById('errorToast');
     const toolDoneBadge = document.getElementById('toolDoneBadge');
+    const toolRunningBadge = document.getElementById('toolRunningBadge');
 
     let reader = null;
     let controller = null;
     let isStreaming = false;
+
+    // Quick prompt chip click listeners
+    document.querySelectorAll('.chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+            promptInput.value = btn.dataset.prompt;
+            promptInput.focus();
+            promptInput.select();
+        });
+    });
 
     function setStatus(kind) {
         const classes = statusIndicator.classList;
@@ -586,9 +725,14 @@
     }
 
     function escapeHtml(text) {
+        if (!text) return '';
         const div = document.createElement('div');
-        div.textContent = text;
+        div.textContent = String(text);
         return div.innerHTML;
+    }
+
+    function sanitizeId(id) {
+        return String(id).replace(/[^a-zA-Z0-9_-]/g, '_');
     }
 
     function showError(message) {
@@ -601,37 +745,94 @@
 
     function clearAll() {
         tokensEl.textContent = '';
-        toolsEl.innerHTML = '<div class="tool-events-empty">No tool events yet.</div>';
+        toolPillsList.innerHTML = '';
+        toolsEmpty.classList.remove('hidden');
         toolDoneBadge.classList.add('hidden');
+        toolRunningBadge.classList.add('hidden');
         streamBadgeEl.classList.add('hidden');
         streamingIndicatorEl.classList.add('hidden');
         setStatus('connected');
     }
 
-    function addToolEvent(event) {
-        const empty = toolsEl.querySelector('.tool-events-empty');
-        if (empty) empty.remove();
+    window.toggleToolPayload = function (id) {
+        const box = document.getElementById('payload-' + id);
+        const btn = document.getElementById('btn-' + id);
+        if (box) {
+            const isHidden = box.classList.toggle('hidden');
+            if (btn) {
+                btn.textContent = isHidden ? 'Result ▾' : 'Result ▴';
+            }
+        }
+    };
 
-        const item = document.createElement('div');
-        item.className = 'tool-event';
+    function handleToolEvent(event) {
+        if (toolsEmpty) {
+            toolsEmpty.classList.add('hidden');
+        }
 
-        const name = escapeHtml(event.tool || event.name || 'unknown');
-        const status = escapeHtml(event.status || 'running');
-        const payload = JSON.stringify(event.payload ?? event, null, 2);
+        const rawId = event.id || event.name || event.tool || ('tool_' + Date.now());
+        const safeId = sanitizeId(rawId);
+        const name = event.name || event.tool || 'unknown';
+        const phase = (event.phase || event.status || 'STARTED').toUpperCase();
 
-        let statusClass = '';
-        if (status === 'success') statusClass = 'badge-complete';
-        else if (status === 'error') statusClass = 'badge-error';
-        else statusClass = 'badge-tool';
+        let item = document.getElementById('tool-item-' + safeId);
+        if (!item) {
+            // Also check if an item with matching name is currently calling
+            const existingByName = toolPillsList.querySelector(`[data-tool-name="${name}"].calling-item`);
+            if (existingByName) {
+                item = existingByName;
+                item.id = 'tool-item-' + safeId;
+            } else {
+                item = document.createElement('div');
+                item.id = 'tool-item-' + safeId;
+                item.className = 'tool-item';
+                item.setAttribute('data-tool-name', name);
+                toolPillsList.appendChild(item);
+            }
+        }
 
-        item.innerHTML =
-            '<div class="tool-event-header">' +
-            '<span class="tool-name">' + name + '</span>' +
-            '<span class="badge ' + statusClass + '">' + status.toUpperCase() + '</span>' +
-            '</div>' +
-            '<div class="tool-payload">' + escapeHtml(payload) + '</div>';
+        if (phase === 'STARTED' || phase === 'RUNNING') {
+            item.classList.add('calling-item');
+            toolRunningBadge.classList.remove('hidden');
+            item.innerHTML = `
+                <div class="tool-pill calling">
+                    <span class="tool-icon">⟳</span>
+                    <span class="tool-text">Calling <span class="tool-name-highlight">${escapeHtml(name)}</span>...</span>
+                </div>
+            `;
+        } else if (phase === 'COMPLETED' || phase === 'SUCCESS') {
+            item.classList.remove('calling-item');
 
-        toolsEl.appendChild(item);
+            let detailsHtml = '';
+            let formattedData = '';
+            const rawData = event.responseData || event.payload || event.result;
+            if (rawData) {
+                try {
+                    const parsed = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+                    formattedData = JSON.stringify(parsed, null, 2);
+                } catch (_) {
+                    formattedData = String(rawData);
+                }
+                detailsHtml = `
+                    <button type="button" class="tool-details-btn" id="btn-${safeId}" onclick="toggleToolPayload('${safeId}')">Result ▾</button>
+                `;
+            }
+
+            item.innerHTML = `
+                <div class="tool-pill completed">
+                    <span class="tool-icon">✔</span>
+                    <span class="tool-text"><span class="tool-name-highlight">${escapeHtml(name)}</span></span>
+                    ${detailsHtml}
+                </div>
+                ${formattedData ? `<pre class="tool-payload-box hidden" id="payload-${safeId}">${escapeHtml(formattedData)}</pre>` : ''}
+            `;
+
+            // If no more calling tools, hide toolRunningBadge
+            if (!toolPillsList.querySelector('.calling-item')) {
+                toolRunningBadge.classList.add('hidden');
+            }
+        }
+
         scrollToBottom(toolsEl);
     }
 
@@ -643,20 +844,22 @@
         showLoading(true);
 
         try {
-            const response = await fetch(
-                "http://localhost:8080/api/agent/chat",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Accept": "text/event-stream"
-                    },
-                    body: JSON.stringify({
-                        prompt: prompt,
-                        conversationId: "user-123"
-                    })
-                }
-            );
+            // Using relative URL or current origin for flexibility
+            const endpoint = (window.location.origin && window.location.origin !== "null")
+                ? window.location.origin + "/api/agent/chat"
+                : "http://localhost:8080/api/agent/chat";
+
+            const response = await fetch(endpoint, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "text/event-stream"
+                },
+                body: JSON.stringify({
+                    prompt: prompt,
+                    conversationId: "user-123"
+                })
+            });
 
             if (!response.ok) {
                 throw new Error("Server responded with status " + response.status);
@@ -699,23 +902,32 @@
                         try {
                             const token = JSON.parse(data);
                             tokensEl.textContent += token;
-                            scrollToBottom(tokensEl);
+                            scrollToBottom(tokensBody);
                         } catch (e) {
-                            // If not JSON, append raw data preserving spacing
                             tokensEl.textContent += data;
-                            scrollToBottom(tokensEl);
+                            scrollToBottom(tokensBody);
                         }
                     } else if (eventName === "tool") {
                         try {
                             const toolEvent = JSON.parse(data);
-                            addToolEvent(toolEvent);
+                            handleToolEvent(toolEvent);
                         } catch (e) {
-                            console.warn("Failed to parse tool event:", e);
+                            console.warn("Failed to parse tool event:", e, data);
                         }
                     } else if (eventName === "error") {
                         showError(data || "An error occurred during streaming.");
                     } else if (eventName === "done") {
                         toolDoneBadge.classList.remove('hidden');
+                        toolRunningBadge.classList.add('hidden');
+                        // Ensure any calling item that didn't receive explicit complete is resolved
+                        toolPillsList.querySelectorAll('.tool-pill.calling').forEach(pill => {
+                            pill.className = 'tool-pill completed';
+                            const icon = pill.querySelector('.tool-icon');
+                            if (icon) {
+                                icon.textContent = '✔';
+                                icon.className = 'tool-icon';
+                            }
+                        });
                     }
                 }
             }

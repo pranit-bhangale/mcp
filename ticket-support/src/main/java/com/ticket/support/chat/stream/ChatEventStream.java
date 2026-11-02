@@ -40,7 +40,7 @@ public class ChatEventStream {
     /**
      * The advisor to register on the request — pushes tool events onto the side channel.
      */
-    ToolCallObservingAdvisor observer() {
+    public ToolCallObservingAdvisor observer() {
         return this.observer;
     }
 
