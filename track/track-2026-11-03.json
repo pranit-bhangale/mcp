@@ -1,0 +1,98 @@
+[
+  {
+    "traceId": "874a80f3-eabc-4685-8d4f-af1d6b4e6d17",
+    "startedAt": "2026-11-03T16:20:08.9214056+05:30",
+    "updatedAt": "2026-11-03T16:20:38.2824287+05:30",
+    "promptPreview": "Get My complete system details with todays weather in Pune and today's date time and time zone and write a complete data in detail.md file",
+    "spanCount": 6,
+    "promptTokens": 20620,
+    "completionTokens": 2720,
+    "totalTokens": 23340,
+    "spans": [
+      {
+        "spanIndex": 1,
+        "spanId": "016b92cd-b20b-43ba-835b-30fddf97fafe",
+        "timestamp": "2026-11-03T16:20:08.9214056+05:30",
+        "durationMs": 6008,
+        "promptTokens": 1607,
+        "completionTokens": 389,
+        "totalTokens": 1996,
+        "generationCount": 1,
+        "streaming": true,
+        "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+        "responseId": "chatcmpl-82fe83a4-b936-4e18-a7e3-3155c611d101",
+        "finishReason": "TOOL_CALLS"
+      },
+      {
+        "spanIndex": 2,
+        "spanId": "0ca7f63a-6307-4f5f-b75d-71076b96dc20",
+        "timestamp": "2026-11-03T16:20:11.0186663+05:30",
+        "durationMs": 1744,
+        "promptTokens": 2617,
+        "completionTokens": 130,
+        "totalTokens": 2747,
+        "generationCount": 1,
+        "streaming": true,
+        "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+        "responseId": "chatcmpl-2f1f6a71-5c02-4bed-bd7d-b877063122d9",
+        "finishReason": "TOOL_CALLS"
+      },
+      {
+        "spanIndex": 3,
+        "spanId": "4c4227c6-ba39-43d8-b5a6-0c7320991f34",
+        "timestamp": "2026-11-03T16:20:12.5057+05:30",
+        "durationMs": 1447,
+        "promptTokens": 2867,
+        "completionTokens": 67,
+        "totalTokens": 2934,
+        "generationCount": 1,
+        "streaming": true,
+        "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+        "responseId": "chatcmpl-f1f150ee-a7f2-46a3-8ae1-f57dd0df64b2",
+        "finishReason": "TOOL_CALLS"
+      },
+      {
+        "spanIndex": 4,
+        "spanId": "eb7a5a85-44fa-4825-a385-cce6ab299507",
+        "timestamp": "2026-11-03T16:20:18.3676955+05:30",
+        "durationMs": 5809,
+        "promptTokens": 3826,
+        "completionTokens": 274,
+        "totalTokens": 4100,
+        "generationCount": 1,
+        "streaming": true,
+        "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+        "responseId": "chatcmpl-46259533-3a4e-4fc8-9288-e38af9ff169a",
+        "finishReason": "TOOL_CALLS"
+      },
+      {
+        "spanIndex": 5,
+        "spanId": "c4b82461-e8ba-49df-844e-2de3cd9f284f",
+        "timestamp": "2026-11-03T16:20:27.4123139+05:30",
+        "durationMs": 7531,
+        "promptTokens": 4360,
+        "completionTokens": 956,
+        "totalTokens": 5316,
+        "generationCount": 1,
+        "streaming": true,
+        "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+        "responseId": "chatcmpl-1f68aa7c-3247-4910-8193-454d490e55d3",
+        "finishReason": "TOOL_CALLS"
+      },
+      {
+        "spanIndex": 6,
+        "spanId": "99bcdc85-7f04-4b5b-8299-57a4175b93ce",
+        "timestamp": "2026-11-03T16:20:38.2824287+05:30",
+        "durationMs": 10801,
+        "promptTokens": 5343,
+        "completionTokens": 904,
+        "totalTokens": 6247,
+        "generationCount": 1,
+        "streaming": true,
+        "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+        "responseId": "chatcmpl-6852f08f-a2e0-4d24-91dc-18b36514d27a",
+        "finishReason": "STOP"
+      }
+    ]
+  }
+]
