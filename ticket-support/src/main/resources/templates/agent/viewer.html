@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Help Desk AI Agent</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Roboto+Mono:wght@400;500&display=swap"
+          rel="stylesheet">
+    <style>
+        :root {
+            --bg: #ffffff;
+            --bg-panel: #f8fafc;
+            --bg-card: #ffffff;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --border-hover: #cbd5e1;
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --primary: #0f172a;
+            --primary-hover: #1e293b;
+            --accent: #10b981;
+            --accent-bg: #ecfdf5;
+            --streaming: #3b82f6;
+            --streaming-bg: #eff6ff;
+            --danger: #ef4444;
+            --danger-bg: #fef2f2;
+            --warning: #f59e0b;
+            --radius: 10px;
+            --radius-sm: 6px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            height: 100vh;
+            height: 100dvh;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Prevent full-window scroll */
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            padding: 16px 24px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ===== Header ===== */
+        .dashboard {
+            width: 100%;
+            max-width: 1440px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 0;
+            flex: 1;
+        }
+
+        header.header {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text);
+            letter-spacing: -0.01em;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 14px;
+            font-weight: 400;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--accent-bg);
+            border: 1px solid #bbf7d0;
+            color: #166534;
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .status-indicator.disconnected {
+            background: var(--danger-bg);
+            border-color: #fecaca;
+            color: #991b1b;
+        }
+
+        .status-indicator.streaming {
+            background: var(--streaming-bg);
+            border-color: #bfdbfe;
+            color: #1d4ed8;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            display: inline-block;
+        }
+
+        .dot.connected {
+            background: #10b981;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+        }
+
+        .dot.streaming {
+            background: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+            animation: pulse 1.5s infinite;
+        }
+
+        .dot.disconnected {
+            background: #ef4444;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        /* ===== Toolbar ===== */
+        .toolbar {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 14px;
+            flex-shrink: 0;
+        }
+
+        .toolbar-main {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        @media (min-width: 768px) {
+            .toolbar-main {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+            }
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: stretch;
+            flex: 1;
+            min-width: 0;
+        }
+
+        #prompt {
+            flex: 1;
+            min-width: 0;
+            padding: 8px 14px;
+            font-family: inherit;
+            font-size: 13.5px;
+            color: var(--text);
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s, height 0.2s ease;
+            resize: none;
+            height: 48px;
+            min-height: 48px;
+            max-height: 200px;
+            overflow-y: auto;
+            line-height: 1.45;
+            box-sizing: border-box;
+        }
+
+        #prompt::placeholder {
+            color: var(--text-muted);
+        }
+
+        #prompt:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+        }
+
+        .input-actions {
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 20px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .send-btn {
+            background: var(--primary);
+            color: #ffffff;
+        }
+
+        .send-btn:hover:not(:disabled) {
+            background: var(--primary-hover);
+        }
+
+        .send-btn:active:not(:disabled) {
+            transform: translateY(0.5px);
+        }
+
+        .clear-btn {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        .clear-btn:hover:not(:disabled) {
+            background: var(--bg-panel);
+            border-color: var(--border-hover);
+            color: var(--text);
+        }
+
+        /* ===== Prompt Chips ===== */
+        .prompt-chips {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding-top: 2px;
+        }
+
+        .chips-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .chip {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 9999px;
+            padding: 4px 12px;
+            font-size: 12px;
+            font-family: inherit;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .chip:hover {
+            background: var(--border);
+            border-color: var(--border-hover);
+            color: var(--primary);
+        }
+
+        /* ===== Loading ===== */
+        .loading {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--streaming-bg);
+            border: 1px solid #bfdbfe;
+            color: #1d4ed8;
+            padding: 8px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .loading.hidden {
+            display: none !important;
+        }
+
+        .spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid #bfdbfe;
+            border-top-color: #1d4ed8;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ===== Grid / Cards (Two-Column Layout) ===== */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* Left: Tokens | Right: Tool Calls */
+            gap: 16px;
+            align-items: stretch;
+            flex: 1;
+            min-height: 0; /* Prevents overflow of the flex parent */
+            height: 100%;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 18px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-panel);
+            border-radius: var(--radius) var(--radius) 0 0;
+            flex-shrink: 0;
+        }
+
+        .card-body {
+            padding: 16px 18px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            flex: 1;
+            min-height: 0; /* Column-only scroll */
+        }
+
+        /* Custom scrollbar for columns */
+        .card-body::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        .card-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .card-body::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+
+        .card-body::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .card-header h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text);
+            letter-spacing: -0.01em;
+        }
+
+        .card-header .badge-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .card-body {
+            padding: 18px;
+            overflow: auto;
+        }
+
+        /* ===== Badges ===== */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 4px 8px;
+            border-radius: var(--radius-sm);
+        }
+
+        .badge-token {
+            background: var(--streaming-bg);
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+        }
+
+        .badge-tool {
+            background: #f1f5f9;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        .badge-complete {
+            background: var(--accent-bg);
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .badge-error {
+            background: var(--danger-bg);
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .badge-done {
+            background: var(--accent-bg);
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .badge-streaming {
+            background: var(--streaming-bg);
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+        }
+
+        /* ===== Live Tokens (Rendered Message) ===== */
+        #tokens {
+            font-family: inherit;
+            font-size: 13.5px;
+            color: var(--text);
+            line-height: 1.7;
+            word-break: break-word;
+            white-space: normal;
+        }
+
+        #tokens p {
+            margin: 0 0 10px 0;
+        }
+
+        #tokens p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Ticket creation response JSON block */
+        #tokens .ticket-response-json {
+            font-family: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 12px;
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+            margin: 10px 0;
+            overflow-x: auto;
+            white-space: pre;
+            color: var(--text);
+            line-height: 1.5;
+        }
+
+        #tokens strong {
+            font-weight: 600;
+        }
+
+        #tokens em {
+            font-style: italic;
+        }
+
+        #tokens ol,
+        #tokens ul {
+            margin: 6px 0 10px 0;
+            padding-left: 22px;
+        }
+
+        #tokens li {
+            margin: 4px 0;
+        }
+
+        .streaming-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #1d4ed8;
+            margin-top: 10px;
+            font-weight: 500;
+        }
+
+        .streaming-indicator.hidden {
+            display: none;
+        }
+
+        /* ===== Tool Stream UI (Matching Tool Stream Demo) ===== */
+        .tool-pills-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .tool-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: all 0.25s ease;
+        }
+
+        .tool-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 13px;
+            font-weight: 500;
+            width: fit-content;
+            max-width: 100%;
+            user-select: none;
+            transition: all 0.25s ease;
+        }
+
+        /* Calling State */
+        .tool-pill.calling {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            color: #475569;
+        }
+
+        .tool-pill.calling .tool-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            line-height: 1;
+            animation: tool-spin 1s linear infinite;
+            color: #64748b;
+        }
+
+        @keyframes tool-spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Completed State */
+        .tool-pill.completed {
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            color: #065f46;
+        }
+
+        .tool-pill.completed .tool-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #059669;
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .tool-name-highlight {
+            font-family: 'Roboto Mono', ui-monospace, monospace;
+            font-weight: 600;
+        }
+
+        .tool-details-btn {
+            font-size: 11px;
+            font-family: inherit;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 2px 7px;
+            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.06);
+            color: inherit;
+            border: none;
+            cursor: pointer;
+            margin-left: 4px;
+            transition: background 0.15s ease;
+        }
+
+        .tool-details-btn:hover {
+            background: rgba(0, 0, 0, 0.12);
+        }
+
+        .tool-payload-box {
+            font-family: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            color: var(--text-muted);
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
+            max-height: 220px;
+            overflow: auto;
+            margin-left: 8px;
+            margin-top: 4px;
+        }
+
+        .tool-events-empty {
+            color: var(--text-muted);
+            font-size: 13px;
+            text-align: center;
+            padding: 20px;
+        }
+
+        /* ===== Toast ===== */
+        .toast {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: var(--shadow-md);
+            z-index: 1000;
+            min-width: 260px;
+        }
+
+        .toast-error {
+            background: var(--danger);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .toast.hidden {
+            display: none;
+        }
+
+        /* ===== Utilities ===== */
+        .hidden {
+            display: none !important;
+        }
+
+        .mt-2 {
+            margin-top: 8px;
+        }
+
+        .text-xs {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+    <header class="header">
+        <div class="header-top">
+            <h1>AI Agent Streaming Viewer</h1>
+            <div class="status-indicator" id="statusIndicator">
+                <span class="dot connected" id="statusDot"></span>
+                <span id="statusText">Connected</span>
+            </div>
+        </div>
+        <p class="subtitle">Monitor AI responses, tool executions and streaming events.</p>
+    </header>
+
+    <div class="toolbar">
+        <div class="toolbar-main">
+            <div class="input-group">
+                <textarea id="prompt" placeholder="Type a message or choose a template below…" rows="1"></textarea>
+                <div class="input-actions">
+                    <button class="btn send-btn" id="sendBtn">Send</button>
+                    <button class="btn clear-btn" id="clearBtn">Clear</button>
+                </div>
+            </div>
+            <div class="loading hidden" id="loading">
+                <div class="spinner"></div>
+                <span>AI is processing&hellip;</span>
+            </div>
+        </div>
+        <div class="prompt-chips">
+            <span class="chips-label">Templates:</span>
+            <button class="chip"
+                    data-template="create-ticket"
+                    type="button">
+                🎫 Create Ticket
+            </button>
+            <button class="chip" data-template="check-ticket"
+                    type="button">🔍 Check Ticket</button>
+            <button class="chip" data-template="check-ticket-status"
+                    type="button">🔍 Check Ticket status</button>
+            <button class="chip" data-template="greeting" type="button">👋 Greeting</button>
+        </div>
+    </div>
+
+    <div class="grid">
+        <section class="card tokens">
+            <div class="card-header">
+                <div class="badge-row">
+                    <span class="badge badge-token">TOKEN</span>
+                    <span class="badge badge-streaming hidden" id="streamBadge">STREAMING</span>
+                </div>
+                <h3>Live Tokens</h3>
+            </div>
+            <div class="card-body" id="tokensBody">
+                <div id="tokens"></div>
+                <div class="streaming-indicator hidden" id="streamingIndicator">
+                    <span class="dot streaming"></span>
+                    Streaming tokens&hellip;
+                </div>
+            </div>
+        </section>
+
+        <section class="card tools">
+            <div class="card-header">
+                <div class="badge-row">
+                    <span class="badge badge-tool">TOOL</span>
+                    <span class="badge badge-streaming hidden" id="toolRunningBadge">CALLING</span>
+                    <span class="badge badge-complete hidden" id="toolDoneBadge">DONE</span>
+                </div>
+                <h3>Tool Events</h3>
+            </div>
+            <div class="card-body" id="tools">
+                <div class="tool-events-empty" id="toolsEmpty">No tool events yet. Send a prompt that calls a tool (e.g.
+                    ticket lookup or creation) to see live executions.
+                </div>
+                <div class="tool-pills-list" id="toolPillsList"></div>
+            </div>
+        </section>
+    </div>
+
+    <div class="toast toast-error hidden" id="errorToast"></div>
+</div>
+
+<script>
+    (function () {
+        const promptInput = document.getElementById('prompt');
+        const sendBtn = document.getElementById('sendBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const tokensEl = document.getElementById('tokens');
+        const tokensBody = document.getElementById('tokensBody');
+        const toolsEl = document.getElementById('tools');
+        const toolsEmpty = document.getElementById('toolsEmpty');
+        const toolPillsList = document.getElementById('toolPillsList');
+        const loadingEl = document.getElementById('loading');
+        const streamBadgeEl = document.getElementById('streamBadge');
+        const streamingIndicatorEl = document.getElementById('streamingIndicator');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const errorToast = document.getElementById('errorToast');
+        const toolDoneBadge = document.getElementById('toolDoneBadge');
+        const toolRunningBadge = document.getElementById('toolRunningBadge');
+
+        let reader = null;
+        let controller = null;
+        let isStreaming = false;
+        let messageBuffer = '';
+        let lastTicketResponse = null;
+
+        // Quick prompt chip click listeners — each uses a dedicated template function
+        const templateFns = {
+            'create-ticket': createTicketTemplate,
+            'check-ticket': checkTicketTemplate,
+            'check-ticket-status': checkTicketStatusTemplate,
+            'greeting': greetingTemplate
+        };
+        document.querySelectorAll('.chip').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const template = btn.dataset.template;
+                const fn = templateFns[template];
+                if (fn) {
+                    applyTemplate(fn());
+                } else {
+                    // Fallback for any chip without a known template
+                    applyTemplate(btn.dataset.prompt || '');
+                }
+                promptInput.focus();
+            });
+        });
+
+        function setStatus(kind) {
+            const classes = statusIndicator.classList;
+            classes.remove('connected', 'streaming', 'disconnected');
+            statusDot.classList.remove('connected', 'streaming', 'disconnected');
+            switch (kind) {
+                case 'connected':
+                    classes.add('connected');
+                    statusDot.classList.add('connected');
+                    statusText.textContent = 'Connected';
+                    break;
+                case 'streaming':
+                    classes.add('streaming');
+                    statusDot.classList.add('streaming');
+                    statusText.textContent = 'Streaming';
+                    break;
+                case 'disconnected':
+                    classes.add('disconnected');
+                    statusDot.classList.add('disconnected');
+                    statusText.textContent = 'Disconnected';
+                    break;
+            }
+        }
+
+        function showLoading(show) {
+            isStreaming = show;
+            loadingEl.classList.toggle('hidden', !show);
+            streamBadgeEl.classList.toggle('hidden', !show);
+            streamingIndicatorEl.classList.toggle('hidden', !show);
+            setStatus(show ? 'streaming' : 'connected');
+            sendBtn.disabled = show;
+            promptInput.disabled = show;
+        }
+
+        function scrollToBottom(el) {
+            requestAnimationFrame(() => {
+                el.scrollTop = el.scrollHeight;
+            });
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = String(text);
+            return div.innerHTML;
+        }
+
+        function renderMarkdown(text) {
+            if (text == null) return '';
+            // Normalize newlines: handle literal \n (backslash-n), CRLF, and lone CR.
+            let raw = String(text).replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/\\n/g, '\n');
+            // Escape HTML to prevent XSS (preserves actual newlines).
+            let html = escapeHtml(raw);
+            // Bold: **text**
+            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            // Italic: *text* (avoid re-matching already-converted strong tags)
+            html = html.replace(/(?<!<)\*(.+?)\*(?!>)/g, '<em>$1</em>');
+            // Process line-by-line to wrap numbered / bulleted lists.
+            const lines = html.split('\n');
+            const out = [];
+            let i = 0;
+            while (i < lines.length) {
+                const line = lines[i];
+                const numMatch = line.match(/^(\d+)\.\s(.+)$/);
+                const bulletMatch = line.match(/^[-*]\s(.+)$/);
+                if (numMatch) {
+                    const items = [];
+                    while (i < lines.length) {
+                        const m = lines[i].match(/^(\d+)\.\s(.+)$/);
+                        if (!m) break;
+                        items.push('<li>' + m[2] + '</li>');
+                        i++;
+                    }
+                    out.push('<ol class="md-list">' + items.join('') + '</ol>');
+                    continue;
+                }
+                if (bulletMatch) {
+                    const items = [];
+                    while (i < lines.length) {
+                        const m = lines[i].match(/^[-*]\s(.+)$/);
+                        if (!m) break;
+                        items.push('<li>' + m[1] + '</li>');
+                        i++;
+                    }
+                    out.push('<ul class="md-list">' + items.join('') + '</ul>');
+                    continue;
+                }
+                out.push(line);
+                i++;
+            }
+            html = out.join('\n');
+            // Paragraphs: split on blank lines; single newlines become <br>.
+            const paras = html.split(/\n\s*\n/);
+            html = paras.map(p => {
+                p = p.trim();
+                if (!p) return '';
+                // Keep list blocks unwrapped.
+                if (p.startsWith('<ol') || p.startsWith('<ul')) return p;
+                p = p.replace(/\n/g, '<br>');
+                return '<p>' + p + '</p>';
+            }).join('');
+            return html;
+        }
+
+        /* ===== Dynamic user context (no hardcoded/dummy values) ===== */
+        function getUserContext() {
+            // Reuse existing browser session state as the user context source.
+            // No authentication system exists in this codebase, so we read from
+            // sessionStorage rather than inventing or falling back to dummy values.
+            try {
+                const stored = sessionStorage.getItem('ticket_support_user');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    return {
+                        userId: parsed.userId || '',
+                        username: parsed.username || ''
+                    };
+                }
+            } catch (e) {
+                console.warn('Failed to read user context from sessionStorage:', e);
+            }
+            return { userId: '', username: '' };
+        }
+
+        /* ===== Template generation functions ===== */
+        function createTicketTemplate() {
+            const { userId, username } = getUserContext();
+            return `Create a support ticket with:\n\nuserId: ${userId}\nusername: ${username}\nsummary:\ndescription:\npriority:\ncategory:`;
+        }
+
+        function checkTicketTemplate() {
+            return 'Please retrieve and show complete details for ticket ID: TKT-483921';
+        }
+
+        function checkTicketStatusTemplate() {
+            return 'Please retrieve and show ticket status for ticket ID: TKT-483921';
+        }
+
+        function greetingTemplate() {
+            return 'Hello! How are you?';
+        }
+
+        function applyTemplate(templateText) {
+            promptInput.value = templateText;
+            autoResizeTextarea();
+            promptInput.focus();
+        }
+
+        /* ===== Auto-resize textarea ===== */
+        function autoResizeTextarea() {
+            const el = promptInput;
+            if (!el) return;
+            // Reset height to auto so shrinking works when text is deleted.
+            el.style.height = 'auto';
+            const newHeight = Math.min(el.scrollHeight, 200);
+            el.style.height = newHeight + 'px';
+            // When content exceeds max-height, CSS overflow-y: auto enables scrolling.
+        }
+
+        function sanitizeId(id) {
+            return String(id).replace(/[^a-zA-Z0-9_-]/g, '_');
+        }
+
+        function showError(message) {
+            errorToast.textContent = message;
+            errorToast.classList.remove('hidden');
+            setTimeout(() => {
+                errorToast.classList.add('hidden');
+            }, 5000);
+        }
+
+        function clearAll() {
+            messageBuffer = '';
+            lastTicketResponse = null;
+            tokensEl.innerHTML = '';
+            toolPillsList.innerHTML = '';
+            promptInput.value = '';
+            autoResizeTextarea();
+            toolsEmpty.classList.remove('hidden');
+            toolDoneBadge.classList.add('hidden');
+            toolRunningBadge.classList.add('hidden');
+            streamBadgeEl.classList.add('hidden');
+            streamingIndicatorEl.classList.add('hidden');
+            setStatus('connected');
+        }
+
+        window.toggleToolPayload = function (id) {
+            const box = document.getElementById('payload-' + id);
+            const btn = document.getElementById('btn-' + id);
+            if (box) {
+                const isHidden = box.classList.toggle('hidden');
+                if (btn) {
+                    btn.textContent = isHidden ? 'Result ▾' : 'Result ▴';
+                }
+            }
+        };
+
+        function handleToolEvent(event) {
+            if (toolsEmpty) {
+                toolsEmpty.classList.add('hidden');
+            }
+
+            const rawId = event.id || event.name || event.tool || ('tool_' + Date.now());
+            const safeId = sanitizeId(rawId);
+            const name = event.name || event.tool || 'unknown';
+            const phase = (event.phase || event.status || 'STARTED').toUpperCase();
+
+            let item = document.getElementById('tool-item-' + safeId);
+            if (!item) {
+                // Also check if an item with matching name is currently calling
+                const existingByName = toolPillsList.querySelector(`[data-tool-name="${name}"].calling-item`);
+                if (existingByName) {
+                    item = existingByName;
+                    item.id = 'tool-item-' + safeId;
+                } else {
+                    item = document.createElement('div');
+                    item.id = 'tool-item-' + safeId;
+                    item.className = 'tool-item';
+                    item.setAttribute('data-tool-name', name);
+                    toolPillsList.appendChild(item);
+                }
+            }
+
+            if (phase === 'STARTED' || phase === 'RUNNING') {
+                item.classList.add('calling-item');
+                toolRunningBadge.classList.remove('hidden');
+                item.innerHTML = `
+                <div class="tool-pill calling">
+                    <span class="tool-icon">⟳</span>
+                    <span class="tool-text">Calling <span class="tool-name-highlight">${escapeHtml(name)}</span>...</span>
+                </div>
+            `;
+            } else if (phase === 'COMPLETED' || phase === 'SUCCESS') {
+                item.classList.remove('calling-item');
+
+                let detailsHtml = '';
+                let formattedData = '';
+                const rawData = event.responseData || event.payload || event.result;
+                if (rawData) {
+                    try {
+                        const parsed = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+                        formattedData = JSON.stringify(parsed, null, 2);
+                        // Track ticket creation response for combined display on done
+                        if (name === 'create_ticket') {
+                            lastTicketResponse = parsed;
+                        }
+                    } catch (_) {
+                        formattedData = String(rawData);
+                    }
+                    detailsHtml = `
+                    <button type="button" class="tool-details-btn" id="btn-${safeId}" onclick="toggleToolPayload('${safeId}')">Result ▴</button>
+                `;
+                }
+
+                item.innerHTML = `
+                <div class="tool-pill completed">
+                    <span class="tool-icon">✔</span>
+                    <span class="tool-text"><span class="tool-name-highlight">${escapeHtml(name)}</span></span>
+                    ${detailsHtml}
+                </div>
+                ${formattedData ? `<pre class="tool-payload-box" id="payload-${safeId}">${escapeHtml(formattedData)}</pre>` : ''}
+            `;
+
+                // If no more calling tools, hide toolRunningBadge
+                if (!toolPillsList.querySelector('.calling-item')) {
+                    toolRunningBadge.classList.add('hidden');
+                }
+            }
+
+            scrollToBottom(toolsEl);
+        }
+
+        async function sendMessage() {
+            const prompt = promptInput.value.trim();
+            if (!prompt) return;
+
+            clearAll();
+            showLoading(true);
+
+            try {
+                // Using relative URL or current origin for flexibility
+                const endpoint = (window.location.origin && window.location.origin !== "null")
+                    ? window.location.origin + "/api/agent/chat"
+                    : "http://localhost:8080/api/agent/chat";
+
+                const response = await fetch(endpoint, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "text/event-stream"
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        conversationId: "user-123"
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error("Server responded with status " + response.status);
+                }
+
+                if (!response.body) {
+                    throw new Error("No response body from server.");
+                }
+
+                controller = new AbortController();
+                reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = "";
+
+                while (true) {
+                    const {value, done} = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, {stream: true});
+
+                    const events = buffer.split("\n\n");
+                    buffer = events.pop();
+
+                    for (const raw of events) {
+                        if (!raw.trim()) continue;
+
+                        const lines = raw.split("\n");
+                        const eventName = lines.find(
+                            line => line.startsWith("event:")
+                        )?.slice(6).trim();
+
+                        const data = lines
+                            .filter(line => line.startsWith("data:"))
+                            .map(line => line.slice(5).trimStart())
+                            .join("\n");
+
+                        if (!eventName) continue;
+
+                        if (eventName === "token") {
+                            try {
+                                const token = JSON.parse(data);
+                                messageBuffer += token;
+                                tokensEl.innerHTML = renderMarkdown(messageBuffer);
+                                scrollToBottom(tokensBody);
+                            } catch (e) {
+                                messageBuffer += data;
+                                tokensEl.innerHTML = renderMarkdown(messageBuffer);
+                                scrollToBottom(tokensBody);
+                            }
+                        } else if (eventName === "tool") {
+                            try {
+                                const toolEvent = JSON.parse(data);
+                                handleToolEvent(toolEvent);
+                            } catch (e) {
+                                console.warn("Failed to parse tool event:", e, data);
+                            }
+                        } else if (eventName === "error") {
+                            showError(data || "An error occurred during streaming.");
+                        } else if (eventName === "done") {
+                            toolDoneBadge.classList.remove('hidden');
+                            toolRunningBadge.classList.add('hidden');
+                            // Ensure any calling item that didn't receive explicit complete is resolved
+                            toolPillsList.querySelectorAll('.tool-pill.calling').forEach(pill => {
+                                pill.className = 'tool-pill completed';
+                                const icon = pill.querySelector('.tool-icon');
+                                if (icon) {
+                                    icon.textContent = '✔';
+                                    icon.className = 'tool-icon';
+                                }
+                            });
+                            // If a ticket was created, display the full combined response
+                            // (intent + message + ticket) as clean formatted JSON.
+                            if (lastTicketResponse) {
+                                const combinedResponse = {
+                                    intent: 'CREATE_TICKET',
+                                    message: `Your support ticket has been created successfully. Ticket ID: ${lastTicketResponse.ticketId}`,
+                                    ticket: {
+                                        ticketId: lastTicketResponse.ticketId,
+                                        summary: lastTicketResponse.summary || '',
+                                        description: lastTicketResponse.description || '',
+                                        priority: lastTicketResponse.priority,
+                                        category: lastTicketResponse.category,
+                                        status: lastTicketResponse.status
+                                    }
+                                };
+                                const formattedJson = JSON.stringify(combinedResponse, null, 2);
+                                tokensEl.innerHTML = `<pre class="ticket-response-json">${escapeHtml(formattedJson)}</pre>`;
+                                scrollToBottom(tokensBody);
+                                lastTicketResponse = null;
+                            }
+                        }
+                    }
+                }
+                // Clear input after successful submission and reset its height.
+                promptInput.value = '';
+                autoResizeTextarea();
+            } catch (err) {
+                console.error(err);
+                setStatus('disconnected');
+                showError(err.message || "Network error: unable to connect to the streaming endpoint.");
+            } finally {
+                showLoading(false);
+                reader = null;
+                controller = null;
+            }
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+
+        promptInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Auto-resize on every input change (typing, pasting, template apply, delete)
+        promptInput.addEventListener('input', autoResizeTextarea);
+
+        // Initialize textarea height on page load
+        autoResizeTextarea();
+
+        clearBtn.addEventListener('click', clearAll);
+
+        // Initialize status
+        setStatus('connected');
+    })();
+</script>
+
+</body>
+</html>
