@@ -1,11 +1,18 @@
 package com.mcp.client.config;
 
+import com.mcp.client.chat.advisor.AvailableToolsLoggingAdvisor;
+import com.mcp.client.chat.advisor.TokenCounterAdvisor;
+import com.mcp.client.chat.advisor.TokenLoggingAdvisor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.api.Advisor;
+import org.springframework.ai.tool.ToolCallbackProvider;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.nio.file.Paths;
 import java.util.List;
 
 @Slf4j
@@ -181,11 +188,43 @@ public class AiConfig {
     @Bean("chatClient")
     public ChatClient chatClient(
             ChatClient.Builder builder,
-            List<Advisor> advisors) {
-
+            List<Advisor> advisors,
+            ToolCallbackProvider provider) {
         return builder
                 .defaultSystem(DEFAULT_SYSTEM_PROMPT)
+                .defaultTools(provider)
                 .defaultAdvisors(advisors)
                 .build();
+    }
+
+    @Bean
+    public List<Advisor> customAdvisors(
+            @Value("${app.token-log.dir:track}") String dir,
+            @Value("${app.token-log.prefix:track}") String prefix,
+            @Value("${app.token-log.preview-length:200}") int previewLength) {
+
+        return List.of(
+                new TokenCounterAdvisor(),
+                new AvailableToolsLoggingAdvisor(),
+                new TokenLoggingAdvisor(Paths.get(dir), prefix, previewLength)
+        );
+    }
+
+    @Bean
+    ApplicationRunner inspectMcpTools(ToolCallbackProvider provider) {
+        return _ -> {
+            var tools = provider.getToolCallbacks();
+            log.info("\n");
+            log.info("\u001B[1;36m========== MCP TOOLS DISCOVERED ==========\u001B[0m");
+            int count = 0;
+            for (var tool : tools) {
+                count++;
+                log.info("\u001B[1;32m[{}] Tool: {}\u001B[0m", count, tool.getToolDefinition().name());
+                log.info("\u001B[0;33m    Description: {}\u001B[0m", tool.getToolDefinition().description());
+                log.info("\u001B[1;34m------------------------------------------\u001B[0m");
+            }
+            log.info("\u001B[1;32mTotal Tools Discovered: {}\u001B[0m", count);
+            log.info("\u001B[1;36m==========================================\u001B[0m\n");
+        };
     }
 }

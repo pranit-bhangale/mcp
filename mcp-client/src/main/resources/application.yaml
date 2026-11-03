@@ -1,11 +1,15 @@
 spring:
   application:
     name: mcp-client
-  # AI Configuration
   ai:
     chat:
       client:
         enabled: true
+        tool-search-advisor:
+          enabled: true
+          tool-index-type: lucene
+          max-results: 3
+          reference-tool-name-accumulation: true
     openai:
       api-key: ${CHAT_KEY}
       base-url: ${CHAT_BASE_URL}
@@ -14,7 +18,17 @@ spring:
         temperature: 0.2
         max-completion-tokens: 2048
       timeout: 120s
-#    mcp:
-#      client:
-#        stdio:
-#          servers-configuration: classpath:servers.json
+    mcp:
+      client:
+        stdio:
+          servers-configuration: classpath:servers.json
+        streamable-http:
+          connections:
+            task-server:
+              url: http://localhost:8081
+
+app:
+  token-log:
+    dir: track
+  prefix: track
+  preview-length: 200
