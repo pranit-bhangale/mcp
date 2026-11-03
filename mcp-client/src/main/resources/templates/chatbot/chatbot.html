@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>AI Agent Chatbot</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Roboto+Mono:wght@400;500&display=swap"
+          rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --bg-panel: #f1f5f9;
+            --bg-card: #ffffff;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --border-hover: #cbd5e1;
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --primary: #0f172a;
+            --primary-hover: #1e293b;
+            --accent: #10b981;
+            --accent-bg: #ecfdf5;
+            --streaming: #3b82f6;
+            --streaming-bg: #eff6ff;
+            --danger: #ef4444;
+            --danger-bg: #fef2f2;
+            --warning: #f59e0b;
+            --radius: 12px;
+            --radius-sm: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            height: 100vh;
+            height: 100dvh;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ===== Header ===== */
+        .dashboard {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 0;
+            flex: 1;
+            padding: 0 24px;
+        }
+
+        header.header {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        header h1 {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--text);
+            letter-spacing: -0.01em;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 14px;
+            font-weight: 400;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--accent-bg);
+            border: 1px solid #bbf7d0;
+            color: #166534;
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .status-indicator.streaming {
+            background: var(--streaming-bg);
+            border-color: #bfdbfe;
+            color: #1d4ed8;
+        }
+
+        .status-indicator.disconnected {
+            background: var(--danger-bg);
+            border-color: #fecaca;
+            color: #991b1b;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            display: inline-block;
+        }
+
+        .dot.connected {
+            background: #10b981;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+        }
+
+        .dot.streaming {
+            background: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+            animation: pulse 1.5s infinite;
+        }
+
+        .dot.disconnected {
+            background: #ef4444;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* ===== Messages Area ===== */
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 16px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            min-height: 0;
+        }
+
+        .messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .messages::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+
+        /* ===== Message Bubbles ===== */
+        .message {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-width: 75%;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            align-self: flex-end;
+            align-items: flex-end;
+        }
+
+        .message.ai {
+            align-self: flex-start;
+            align-items: flex-start;
+        }
+
+        .message .bubble {
+            padding: 12px 16px;
+            border-radius: var(--radius);
+            font-size: 14px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+            position: relative;
+        }
+
+        .message.user .bubble {
+            background: var(--primary);
+            color: #ffffff;
+            border-bottom-right-radius: 4px;
+            box-shadow: var(--shadow);
+        }
+
+        .message.ai .bubble {
+            background: var(--bg-card);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-bottom-left-radius: 4px;
+            box-shadow: var(--shadow);
+        }
+
+        .message .meta {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .message.user .meta {
+            color: #94a3b8;
+        }
+
+        .message.ai .meta {
+            color: var(--text-muted);
+        }
+
+        .message.ai.ai-searching .bubble-searching {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        /* ===== Markdown rendering in AI bubbles ===== */
+        .message.ai .bubble code {
+            font-family: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.9em;
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #1e293b;
+        }
+
+        .message.ai .bubble pre {
+            font-family: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 12px;
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+            margin: 10px 0;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            color: var(--text);
+            line-height: 1.5;
+        }
+
+        .message.ai .bubble pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+            font-size: inherit;
+        }
+
+        .message.ai .bubble p {
+            margin: 0 0 10px 0;
+        }
+
+        .message.ai .bubble p:last-child {
+            margin-bottom: 0;
+        }
+
+        .message.ai .bubble ol,
+        .message.ai .bubble ul {
+            margin: 6px 0 10px 0;
+            padding-left: 24px;
+        }
+
+        .message.ai .bubble li {
+            margin: 4px 0;
+        }
+
+        .message.ai .bubble br {
+            display: block;
+            height: 1px;
+            content: "";
+            margin: 0;
+        }
+
+        /* ===== Tool Calling Pills (inline in AI message) ===== */
+        .tool-pills {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin: 8px 0 0 0;
+            width: 100%;
+        }
+
+        .tool-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            animation: slideIn 0.25s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(2px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tool-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 13px;
+            font-weight: 500;
+            width: fit-content;
+            max-width: 100%;
+            user-select: none;
+            transition: all 0.25s ease;
+        }
+
+        .tool-pill.calling {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            color: #475569;
+        }
+
+        .tool-pill.calling .tool-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            line-height: 1;
+            animation: tool-spin 1s linear infinite;
+            color: #64748b;
+        }
+
+        @keyframes tool-spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .tool-pill.completed {
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            color: #065f46;
+        }
+
+        .tool-pill.completed .tool-icon {
+            color: #059669;
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .tool-name-highlight {
+            font-family: 'Roboto Mono', ui-monospace, monospace;
+            font-weight: 600;
+        }
+
+        .tool-details-btn {
+            font-size: 11px;
+            font-family: inherit;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 2px 7px;
+            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.06);
+            color: inherit;
+            border: none;
+            cursor: pointer;
+            margin-left: 4px;
+            transition: background 0.15s ease;
+        }
+
+        .tool-details-btn:hover {
+            background: rgba(0, 0, 0, 0.12);
+        }
+
+        .tool-payload-box {
+            font-family: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            color: var(--text-muted);
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
+            max-height: 220px;
+            overflow: auto;
+            margin-left: 8px;
+            margin-top: 4px;
+        }
+
+        /* ===== Streaming Indicator ===== */
+        .streaming-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #1d4ed8;
+            margin-top: 8px;
+            font-weight: 500;
+        }
+
+        .streaming-indicator.hidden {
+            display: none;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 1em;
+            background: var(--streaming);
+            animation: blink 1s infinite;
+            vertical-align: middle;
+            margin-left: 2px;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* ===== Agent thinking indicator ===== */
+        .thinking-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--streaming);
+            margin-top: 8px;
+            font-weight: 500;
+        }
+
+        .thinking-indicator.hidden {
+            display: none;
+        }
+
+        .thinking-dots {
+            display: inline-flex;
+            gap: 2px;
+        }
+
+        .thinking-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--streaming);
+            border-radius: 50%;
+            animation: thinkingBounce 1.4s infinite ease-in-out both;
+        }
+
+        .thinking-dot:nth-child(1) { animation-delay: -0.32s; }
+        .thinking-dot:nth-child(2) { animation-delay: -0.16s; }
+        .thinking-dot:nth-child(3) { animation-delay: 0s; }
+
+        @keyframes thinkingBounce {
+            0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        /* ===== Input Area ===== */
+        .input-area {
+            flex-shrink: 0;
+            padding: 16px 0;
+            border-top: 1px solid var(--border);
+            background: var(--bg);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: stretch;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        #prompt {
+            flex: 1;
+            min-width: 0;
+            padding: 10px 16px;
+            font-family: inherit;
+            font-size: 14px;
+            color: var(--text);
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s, height 0.2s ease;
+            resize: none;
+            height: 48px;
+            min-height: 48px;
+            max-height: 200px;
+            overflow-y: auto;
+            line-height: 1.5;
+            box-sizing: border-box;
+        }
+
+        #prompt::placeholder {
+            color: var(--text-muted);
+        }
+
+        #prompt:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+        }
+
+        .input-actions {
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 20px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .send-btn {
+            background: var(--primary);
+            color: #ffffff;
+        }
+
+        .send-btn:hover:not(:disabled) {
+            background: var(--primary-hover);
+        }
+
+        .send-btn:active:not(:disabled) {
+            transform: translateY(0.5px);
+        }
+
+        .clear-btn {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        .clear-btn:hover:not(:disabled) {
+            background: var(--bg-panel);
+            border-color: var(--border-hover);
+            color: var(--text);
+        }
+
+        /* ===== Empty State ===== */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 40px 24px;
+        }
+
+        .empty-state h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+            max-width: 400px;
+        }
+
+        /* ===== Toast ===== */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 18px;
+            border-radius: var(--radius-sm);
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: var(--shadow-md);
+            z-index: 2000;
+            transition: opacity 0.3s ease;
+            min-width: 260px;
+        }
+
+        .toast-error {
+            background: var(--danger);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .toast.hidden {
+            display: none !important;
+        }
+
+        /* ===== Utilities ===== */
+        .hidden {
+            display: none !important;
+        }
+
+        .text-xs {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 768px) {
+            .dashboard {
+                padding: 0 16px;
+            }
+
+            .input-group {
+                padding: 0 16px;
+            }
+
+            .message {
+                max-width: 85%;
+            }
+
+            header h1 {
+                font-size: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .message {
+                max-width: 90%;
+            }
+
+            #prompt {
+                height: 44px;
+                min-height: 44px;
+                font-size: 13px;
+                padding: 8px 14px;
+            }
+
+            .btn {
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+    <header class="header">
+        <div class="header-top">
+            <div>
+                <h1>AI Agent Chatbot</h1>
+                <p class="subtitle">Ask questions, watch tools execute, and stream responses.</p>
+            </div>
+            <div class="status-indicator" id="statusIndicator">
+                <span class="dot connected" id="statusDot"></span>
+                <span id="statusText">Connected</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="messages" id="messages">
+        <div class="empty-state" id="emptyState">
+            <h3>Start a conversation</h3>
+            <p>Type a message below and the AI agent will respond. Tool calls and streaming appear live.</p>
+        </div>
+    </div>
+
+    <div class="input-area">
+        <div class="input-group">
+            <textarea id="prompt" placeholder="Type your message…" rows="1"></textarea>
+            <div class="input-actions">
+                <button class="btn send-btn" id="sendBtn">Send</button>
+                <button class="btn clear-btn" id="clearBtn">Clear</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast toast-error hidden" id="errorToast"></div>
+</div>
+
+<script th:inline="javascript">
+    (function () {
+        const messagesEl = document.getElementById('messages');
+        const emptyState = document.getElementById('emptyState');
+        const promptInput = document.getElementById('prompt');
+        const sendBtn = document.getElementById('sendBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const errorToast = document.getElementById('errorToast');
+
+        let reader = null;
+        let controller = null;
+        let isStreaming = false;
+        let currentAiBubble = null;
+        let currentAiSearching = null;
+        let currentAiText = '';
+        let currentToolItems = new Map();
+
+        // Auto-resize textarea
+        function autoResizeTextarea() {
+            const el = promptInput;
+            if (!el) return;
+            el.style.height = 'auto';
+            const newHeight = Math.min(el.scrollHeight, 200);
+            el.style.height = newHeight + 'px';
+        }
+
+        function setStatus(kind) {
+            const classes = statusIndicator.classList;
+            classes.remove('connected', 'streaming', 'disconnected');
+            statusDot.classList.remove('connected', 'streaming', 'disconnected');
+            switch (kind) {
+                case 'connected':
+                    classes.add('connected');
+                    statusDot.classList.add('connected');
+                    statusText.textContent = 'Connected';
+                    break;
+                case 'streaming':
+                    classes.add('streaming');
+                    statusDot.classList.add('streaming');
+                    statusText.textContent = 'Streaming';
+                    break;
+                case 'disconnected':
+                    classes.add('disconnected');
+                    statusDot.classList.add('disconnected');
+                    statusText.textContent = 'Disconnected';
+                    break;
+            }
+        }
+
+        function showLoading(show) {
+            isStreaming = show;
+            setStatus(show ? 'streaming' : 'connected');
+            sendBtn.disabled = show;
+            promptInput.disabled = show;
+        }
+
+        function scrollToBottom() {
+            requestAnimationFrame(() => {
+                messagesEl.scrollTop = messagesEl.scrollHeight;
+            });
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = String(text);
+            return div.innerHTML;
+        }
+
+        function renderMarkdown(text) {
+            if (text == null) return '';
+            // Normalize newlines: handle literal \n, CRLF, lone CR.
+            let raw = String(text).replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/\\n/g, '\n');
+            // Escape HTML for XSS safety first.
+            let html = escapeHtml(raw);
+            // Fenced code blocks: ```lang ... ```
+            html = html.replace(/```(\w+)?\n([\s\S]*?)\n```/g, '<pre><code>$2</code></pre>');
+            // Inline code: `text`
+            html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+            // Bold: **text**
+            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            // Italic: *text*
+            html = html.replace(/(?<!<)\*(.+?)\*(?!>)/g, '<em>$1</em>');
+            // Process line-by-line for numbered and bulleted lists.
+            const lines = html.split('\n');
+            const out = [];
+            let i = 0;
+            while (i < lines.length) {
+                const line = lines[i];
+                const numMatch = line.match(/^(\d+)\.\s(.+)$/);
+                const bulletMatch = line.match(/^[-*]\s(.+)$/);
+                if (numMatch) {
+                    const items = [];
+                    while (i < lines.length) {
+                        const m = lines[i].match(/^(\d+)\.\s(.+)$/);
+                        if (!m) break;
+                        items.push('<li>' + m[2] + '</li>');
+                        i++;
+                    }
+                    out.push('<ol>' + items.join('') + '</ol>');
+                    continue;
+                }
+                if (bulletMatch) {
+                    const items = [];
+                    while (i < lines.length) {
+                        const m = lines[i].match(/^[-*]\s(.+)$/);
+                        if (!m) break;
+                        items.push('<li>' + m[1] + '</li>');
+                        i++;
+                    }
+                    out.push('<ul>' + items.join('') + '</ul>');
+                    continue;
+                }
+                out.push(line);
+                i++;
+            }
+            html = out.join('\n');
+            // Paragraphs: split on blank lines; single newlines become <br>.
+            const paras = html.split(/\n\s*\n/);
+            html = paras.map(p => {
+                p = p.trim();
+                if (!p) return '';
+                if (p.startsWith('<pre') || p.startsWith('<ol') || p.startsWith('<ul')) return p;
+                p = p.replace(/\n/g, '<br>');
+                return '<p>' + p + '</p>';
+            }).join('');
+            return html;
+        }
+
+        function hideEmptyState() {
+            if (emptyState) emptyState.classList.add('hidden');
+        }
+
+        function showError(message) {
+            errorToast.textContent = message;
+            errorToast.classList.remove('hidden');
+            setTimeout(() => errorToast.classList.add('hidden'), 5000);
+        }
+
+        function addUserMessage(text) {
+            hideEmptyState();
+            const msg = document.createElement('div');
+            msg.className = 'message user';
+            msg.innerHTML = `
+                <div class="meta">You</div>
+                <div class="bubble">${escapeHtml(text)}</div>
+            `;
+            messagesEl.appendChild(msg);
+            scrollToBottom();
+        }
+
+        function showAISearching() {
+            hideEmptyState();
+            currentAiSearching = document.createElement('div');
+            currentAiSearching.className = 'message ai ai-searching';
+            currentAiSearching.innerHTML = `
+                <div class="meta">AI Agent</div>
+                <div class="bubble-searching">
+                    <span class="thinking-dots">
+                        <span class="thinking-dot"></span>
+                        <span class="thinking-dot"></span>
+                        <span class="thinking-dot"></span>
+                    </span>
+                    AI agent thinking…
+                </div>
+            `;
+            messagesEl.appendChild(currentAiSearching);
+            scrollToBottom();
+        }
+
+        function appendAiText(text) {
+            if (!currentAiBubble) {
+                // Convert searching indicator into the real bubble on first token
+                if (currentAiSearching) {
+                    currentAiSearching.remove();
+                    currentAiSearching = null;
+                }
+                // Initialize the AI bubble with all components
+                currentAiBubble = document.createElement('div');
+                currentAiBubble.className = 'message ai';
+                currentAiBubble.innerHTML = `
+                    <div class="meta">AI Agent</div>
+                    <div class="bubble" id="aiBubble-${Date.now()}">
+                        <div class="bubble-content"></div>
+                        <div class="thinking-indicator" id="thinkingIndicator-${Date.now()}">
+                            <span class="thinking-dots">
+                                <span class="thinking-dot"></span>
+                                <span class="thinking-dot"></span>
+                                <span class="thinking-dot"></span>
+                            </span>
+                            AI agent thinking…
+                        </div>
+                        <div class="streaming-indicator hidden" id="streamingIndicator-${Date.now()}">
+                            <span class="dot streaming"></span>
+                            Streaming…
+                        </div>
+                    </div>
+                    <div class="tool-pills" id="toolPills-${Date.now()}"></div>
+                `;
+                messagesEl.appendChild(currentAiBubble);
+                currentAiText = '';
+                currentToolItems = new Map();
+                scrollToBottom();
+            }
+            currentAiText += text;
+            const bubbleId = 'aiBubble-' + (currentAiBubble.dataset.bubbleId || Date.now());
+            if (!currentAiBubble.dataset.bubbleId) {
+                currentAiBubble.dataset.bubbleId = Date.now();
+            }
+            const contentEl = currentAiBubble.querySelector('.bubble-content');
+            if (contentEl) {
+                contentEl.innerHTML = renderMarkdown(currentAiText);
+            }
+            // Hide thinking indicator, show streaming indicator
+            const thinkingEl = currentAiBubble.querySelector('.thinking-indicator');
+            if (thinkingEl) thinkingEl.classList.add('hidden');
+            const indicator = currentAiBubble.querySelector('.streaming-indicator');
+            if (indicator) indicator.classList.remove('hidden');
+            scrollToBottom();
+        }
+
+        function handleToolEvent(event) {
+            if (!currentAiBubble) return;
+
+            const rawId = event.id || event.name || event.tool || ('tool_' + Date.now());
+            const safeId = String(rawId).replace(/[^a-zA-Z0-9_-]/g, '_');
+            const name = event.name || event.tool || 'unknown';
+            const phase = (event.phase || event.status || 'STARTED').toUpperCase();
+
+            const toolPillsContainer = currentAiBubble.querySelector('.tool-pills');
+            if (!toolPillsContainer) return;
+
+            let item = currentToolItems.get(safeId);
+            if (!item) {
+                item = document.createElement('div');
+                item.className = 'tool-item';
+                item.id = 'tool-item-' + safeId;
+                toolPillsContainer.appendChild(item);
+                currentToolItems.set(safeId, item);
+            }
+
+            if (phase === 'STARTED' || phase === 'RUNNING') {
+                item.innerHTML = `
+                    <div class="tool-pill calling">
+                        <span class="tool-icon">⟳</span>
+                        <span class="tool-text">Calling <span class="tool-name-highlight">${escapeHtml(name)}</span>...</span>
+                    </div>
+                `;
+            } else if (phase === 'COMPLETED' || phase === 'SUCCESS') {
+                let detailsHtml = '';
+                let formattedData = '';
+                const rawData = event.responseData || event.payload || event.result;
+                if (rawData) {
+                    try {
+                        const parsed = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+                        formattedData = JSON.stringify(parsed, null, 2);
+                    } catch (_) {
+                        formattedData = String(rawData);
+                    }
+                    detailsHtml = `
+                        <button type="button" class="tool-details-btn" id="btn-${safeId}" onclick="toggleToolPayload('${safeId}')">Result ▾</button>
+                    `;
+                }
+
+                item.innerHTML = `
+                    <div class="tool-pill completed">
+                        <span class="tool-icon">✔</span>
+                        <span class="tool-text"><span class="tool-name-highlight">${escapeHtml(name)}</span></span>
+                        ${detailsHtml}
+                    </div>
+                    ${formattedData ? `<pre class="tool-payload-box hidden" id="payload-${safeId}">${escapeHtml(formattedData)}</pre>` : ''}
+                `;
+            }
+
+            scrollToBottom();
+        }
+
+        window.toggleToolPayload = function (id) {
+            const box = document.getElementById('payload-' + id);
+            const btn = document.getElementById('btn-' + id);
+            if (box) {
+                const isHidden = box.classList.toggle('hidden');
+                if (btn) btn.textContent = isHidden ? 'Result ▾' : 'Result ▴';
+            }
+        };
+
+        function finishAiMessage() {
+            if (!currentAiBubble) return;
+            const indicator = currentAiBubble.querySelector('.streaming-indicator');
+            if (indicator) indicator.classList.add('hidden');
+            const thinkingEl = currentAiBubble.querySelector('.thinking-indicator');
+            if (thinkingEl) thinkingEl.classList.add('hidden');
+            // Remove cursor if present
+            const cursor = currentAiBubble.querySelector('.cursor');
+            if (cursor) cursor.remove();
+
+            // Try to parse the accumulated response as JSON and extract only the message field.
+            // This removes "intent" and "data: null" from the visible output.
+            try {
+                const parsed = JSON.parse(currentAiText);
+                if (parsed && typeof parsed === 'object' && parsed.message) {
+                    const contentEl = currentAiBubble.querySelector('.bubble-content');
+                    if (contentEl) {
+                        contentEl.innerHTML = renderMarkdown(parsed.message);
+                    }
+                }
+            } catch (e) {
+                // Not valid JSON — keep the streamed text as-is
+            }
+
+            currentAiBubble = null;
+            currentAiSearching = null;
+            scrollToBottom();
+        }
+
+        function clearAll() {
+            messagesEl.innerHTML = '';
+            emptyState.classList.remove('hidden');
+            currentAiBubble = null;
+            currentAiSearching = null;
+            currentAiText = '';
+            currentToolItems = new Map();
+            setStatus('connected');
+            sendBtn.disabled = false;
+            promptInput.disabled = false;
+            promptInput.value = '';
+            autoResizeTextarea();
+        }
+
+        async function sendMessage() {
+            const prompt = promptInput.value.trim();
+            if (!prompt) return;
+
+            addUserMessage(prompt);
+            promptInput.value = '';
+            autoResizeTextarea();
+
+            // Show lightweight "AI agent thinking..." text without a big bubble box
+            showAISearching();
+
+            showLoading(true);
+
+            try {
+                const endpoint = (window.location.origin && window.location.origin !== "null")
+                    ? window.location.origin + "/api/agent/chat"
+                    : "http://localhost:8080/api/agent/chat";
+
+                const response = await fetch(endpoint, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "text/event-stream"
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error("Server responded with status " + response.status);
+                }
+
+                if (!response.body) {
+                    throw new Error("No response body from server.");
+                }
+
+                controller = new AbortController();
+                reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = "";
+
+                while (true) {
+                    const {value, done} = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, {stream: true});
+
+                    const events = buffer.split("\n\n");
+                    buffer = events.pop();
+
+                    for (const raw of events) {
+                        if (!raw.trim()) continue;
+
+                        const lines = raw.split("\n");
+                        const eventName = lines.find(
+                            line => line.startsWith("event:")
+                        )?.slice(6).trim();
+
+                        const data = lines
+                            .filter(line => line.startsWith("data:"))
+                            .map(line => line.slice(5).trimStart())
+                            .join("\n");
+
+                        if (!eventName) continue;
+
+                        if (eventName === "token") {
+                            try {
+                                const token = JSON.parse(data);
+                                appendAiText(token);
+                            } catch (e) {
+                                appendAiText(data);
+                            }
+                        } else if (eventName === "tool") {
+                            try {
+                                const toolEvent = JSON.parse(data);
+                                handleToolEvent(toolEvent);
+                            } catch (e) {
+                                console.warn("Failed to parse tool event:", e, data);
+                            }
+                        } else if (eventName === "error") {
+                            showError(data || "An error occurred during streaming.");
+                        } else if (eventName === "done") {
+                            finishAiMessage();
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+                setStatus('disconnected');
+                showError(err.message || "Network error: unable to connect to the streaming endpoint.");
+            } finally {
+                showLoading(false);
+                reader = null;
+                controller = null;
+            }
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+
+        promptInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        promptInput.addEventListener('input', autoResizeTextarea);
+
+        clearBtn.addEventListener('click', clearAll);
+
+        // Initialize
+        setStatus('connected');
+        autoResizeTextarea();
+    })();
+</script>
+
+</body>
+</html>

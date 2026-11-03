@@ -7,3 +7,5 @@ spring:
         name: mcp-server
         version: 1.0.0
         protocol: STREAMABLE
+server:
+  port: 8081
