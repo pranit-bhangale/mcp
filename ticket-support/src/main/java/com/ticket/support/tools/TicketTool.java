@@ -2,6 +2,7 @@ package com.ticket.support.tools;
 
 import com.ticket.support.dto.TicketRequest;
 import com.ticket.support.dto.TicketResponse;
+import com.ticket.support.entity.Status;
 import com.ticket.support.service.TicketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.tool.annotation.Tool;
@@ -39,7 +40,7 @@ public class TicketTool {
                     """)
             TicketRequest request
     ) {
-        return ticketService.createTicket(request);
+        return this.ticketService.createTicket(request);
     }
 
     @Tool(
@@ -65,6 +66,31 @@ public class TicketTool {
                     """)
             String ticketId
     ) {
-        return ticketService.fetchTicketDetailById(ticketId);
+        return this.ticketService.fetchTicketDetailById(ticketId);
+    }
+
+    @Tool(
+            name = "get_ticket_status_by_id",
+            description = """
+                    Retrieves the current status of an existing support ticket.
+                    
+                    Use this tool when the user:
+                    - Wants to know the status of a ticket.
+                    - Asks whether a ticket is open, in progress, resolved, or closed.
+                    - Wants to check the progress of a complaint.
+                    - Wants to track the status of an existing ticket.
+                    
+                    Requires a valid ticket ID, such as TKT-483921.
+                    Do not call this tool without a ticket ID.
+                    """
+    )
+    public Status getTicketStatusById(
+            @ToolParam(description = """
+                    Unique support ticket identifier.
+                    Example: TKT-483921.
+                    """)
+            String ticketId
+    ) {
+        return this.ticketService.getTicketStatus(ticketId);
     }
 }

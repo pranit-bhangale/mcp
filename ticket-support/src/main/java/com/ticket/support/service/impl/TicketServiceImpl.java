@@ -102,6 +102,12 @@ public class TicketServiceImpl implements TicketService {
         return Page.paginate(this.ticketRepository, specification, page, size, sortBy, sortDirection, ALLOWED_SORT_PROPERTIES, this::toTicketResponse);
     }
 
+    @Override
+    @Transactional(propagation = Propagation.REQUIRED, readOnly = true, rollbackFor = Exception.class)
+    public Status getTicketStatus(final String ticketId) {
+        return this.ticketRepository.findStatusOfTicket(ticketId);
+    }
+
     private String generateTicketId() {
         return "TKT-" + (100000 + new SecureRandom().nextInt(900000));
     }

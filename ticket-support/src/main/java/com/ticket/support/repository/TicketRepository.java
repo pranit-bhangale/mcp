@@ -1,5 +1,6 @@
 package com.ticket.support.repository;
 
+import com.ticket.support.entity.Status;
 import com.ticket.support.entity.Ticket;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -27,4 +28,11 @@ public interface TicketRepository extends JpaRepository<Ticket, UUID>, JpaSpecif
     );
 
     Optional<Ticket> findByTicketId(String ticketId);
+
+    @Query("""
+            SELECT t.status
+            FROM Ticket t
+            WHERE t.ticketId = :ticketId
+            """)
+    Status findStatusOfTicket(@Param("ticketId") String ticketId);
 }
