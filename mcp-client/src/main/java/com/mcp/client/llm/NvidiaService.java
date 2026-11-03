@@ -1,6 +1,7 @@
 package com.mcp.client.llm;
 
 import com.mcp.client.chat.stream.ChatEventStream;
+import com.mcp.client.tools.CalculatorTools;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.http.codec.ServerSentEvent;
@@ -14,6 +15,7 @@ public class NvidiaService implements AiService {
 
     private final ChatClient chatClient;
     private final JsonMapper jsonMapper;
+    private final CalculatorTools calculatorTools;
 
     @Override
     public Flux<ServerSentEvent<String>> askAiAgent(final String prompt) {
@@ -21,6 +23,7 @@ public class NvidiaService implements AiService {
         final Flux<ServerSentEvent<String>> answerTokens = this.chatClient.prompt()
                 .advisors(events.observer())
                 .user(prompt)
+                .tools(this.calculatorTools)
                 .stream()
                 .content()
                 .map(events::token);
